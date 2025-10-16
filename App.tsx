@@ -1,21 +1,21 @@
 // Fix: Implemented the main App component with view routing logic.
 import React, { useState } from 'react';
 import { Header } from './components/Header';
-import { DashboardView } from './views/DashboardView';
+import { CoursesView } from './views/DashboardView';
 import { CompilerView } from './views/CompilerView';
 import { ProblemsView } from './views/ProblemsView';
 import { CompeteView } from './views/CompeteView';
 import { ProfileView } from './views/ProfileView';
 
-type View = 'dashboard' | 'compiler' | 'problems' | 'compete' | 'profile';
+type View = 'courses' | 'compiler' | 'problems' | 'compete' | 'profile';
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('compiler');
 
   const renderView = () => {
     switch (currentView) {
-      case 'dashboard':
-        return <DashboardView />;
+      case 'courses':
+        return <CoursesView />;
       case 'compiler':
         return <CompilerView />;
       case 'problems':

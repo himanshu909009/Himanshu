@@ -34,7 +34,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
             </div>
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-2">
-                <NavLink view="dashboard" currentView={currentView} onNavigate={onNavigate}>Dashboard</NavLink>
+                <NavLink view="courses" currentView={currentView} onNavigate={onNavigate}>Courses</NavLink>
                 <NavLink view="compiler" currentView={currentView} onNavigate={onNavigate}>Compiler</NavLink>
                 <NavLink view="problems" currentView={currentView} onNavigate={onNavigate}>Problems</NavLink>
                 <NavLink view="compete" currentView={currentView} onNavigate={onNavigate}>Compete</NavLink>

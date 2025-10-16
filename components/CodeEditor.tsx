@@ -42,16 +42,45 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
             {lineIndex > 0 ? '\n' : ''}
             {(() => {
                 const line = lines[lineIndex];
-                if (errorColumn !== null && errorColumn > 0 && errorColumn <= line.length + 1) {
-                    const col = errorColumn - 1;
+                if (errorColumn !== null && errorColumn > 0) {
+                    const colIndex = Math.min(errorColumn - 1, line.length);
+
+                    // If error is at EOL (e.g., missing ';'), highlight a space there.
+                    if (colIndex === line.length) {
+                        return <>{line}<span className="bg-red-500 bg-opacity-40 rounded-sm"> </span></>;
+                    }
+                    
+                    let start = colIndex;
+                    let end = colIndex;
+
+                    // If the character at the error column is whitespace, just highlight that single character.
+                    // Otherwise, expand to find the boundaries of the containing word/token.
+                    if (!/\s/.test(line[start])) {
+                        // Expand left
+                        while (start > 0 && !/\s/.test(line[start - 1])) {
+                            start--;
+                        }
+                        // Expand right
+                        while (end < line.length - 1 && !/\s/.test(line[end + 1])) {
+                            end++;
+                        }
+                    }
+
+                    const before = line.substring(0, start);
+                    const erroredPart = line.substring(start, end + 1);
+                    const after = line.substring(end + 1);
+
                     return (
                         <>
-                            {line.substring(0, col)}
-                            <span className="bg-red-500 bg-opacity-40 rounded-sm">{line.substring(col, col + 1) || ' '}</span>
-                            {line.substring(col + 1)}
+                            {before}
+                            <span className="bg-red-500 bg-opacity-20 rounded-sm underline decoration-wavy decoration-red-500">
+                                {erroredPart}
+                            </span>
+                            {after}
                         </>
                     );
                 }
+                // Fallback to highlighting the whole line if no column info
                 return <span className="bg-red-500 bg-opacity-30">{line || ' '}</span>;
             })()}
             {lineIndex < lines.length - 1 ? '\n' : ''}
