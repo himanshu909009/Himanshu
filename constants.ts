@@ -6,6 +6,7 @@ export const LANGUAGES: LanguageOption[] = [
   { id: 'javascript', name: 'JavaScript' },
   { id: 'java', name: 'Java' },
   { id: 'cpp', name: 'C++' },
+  { id: 'c', name: 'C' },
 ];
 
 export const DEFAULT_CODE: Record<Language, string> = {
@@ -13,6 +14,7 @@ export const DEFAULT_CODE: Record<Language, string> = {
   javascript: 'function main() {\n    // Your code here\n    console.log("Hello, World!");\n}\n\nmain();',
   java: 'public class Main {\n    public static void main(String[] args) {\n        // Your code here\n        System.out.println("Hello, World!");\n    }\n}',
   cpp: '#include <iostream>\n\nint main() {\n    // Your code here\n    std::cout << "Hello, World!" << std::endl;\n    return 0;\n}',
+  c: '#include <stdio.h>\n\nint main() {\n    // Your code here\n    printf("Hello, World!\\n");\n    return 0;\n}',
 };
 
 export const COURSES: Course[] = [
@@ -26,6 +28,7 @@ export const PRACTICE_PROBLEMS: PracticeProblem[] = [
     { name: 'JavaScript', description: 'Sharpen your JS skills for web dev.', problems: 90, level: 'Medium', icon: '<svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l-4 4-4-4 4-4"></path></svg>', color: 'bg-yellow-500' },
     { name: 'Java', description: 'Solve problems with robust, object-oriented code.', problems: 150, level: 'Medium', icon: '<svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l-4 4-4-4 4-4"></path></svg>', color: 'bg-red-500' },
     { name: 'C++', description: 'Tackle complex problems with high performance.', problems: 180, level: 'Hard', icon: '<svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l-4 4-4-4 4-4"></path></svg>', color: 'bg-gray-600' },
+    { name: 'C', description: 'Learn the fundamentals of systems programming.', problems: 160, level: 'Hard', icon: '<svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l-4 4-4-4 4-4"></path></svg>', color: 'bg-indigo-600' },
 ];
 
 export const CONTESTS: Contest[] = [

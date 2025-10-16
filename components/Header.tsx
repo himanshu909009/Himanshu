@@ -38,6 +38,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
                 <NavLink view="compiler" currentView={currentView} onNavigate={onNavigate}>Compiler</NavLink>
                 <NavLink view="problems" currentView={currentView} onNavigate={onNavigate}>Problems</NavLink>
                 <NavLink view="compete" currentView={currentView} onNavigate={onNavigate}>Compete</NavLink>
+                <NavLink view="profile" currentView={currentView} onNavigate={onNavigate}>Profile</NavLink>
               </div>
             </div>
           </div>

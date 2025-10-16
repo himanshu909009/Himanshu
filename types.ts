@@ -1,5 +1,5 @@
 // Fix: Populated `types.ts` with all the necessary type definitions for the application.
-export type Language = 'python' | 'javascript' | 'java' | 'cpp';
+export type Language = 'python' | 'javascript' | 'java' | 'cpp' | 'c';
 
 export interface LanguageOption {
   id: Language;
@@ -17,9 +17,18 @@ export interface ExecutionResult {
   stdin: string;
 }
 
+export interface VirtualFile {
+    id: string;
+    name: string;
+    content: string;
+}
+
 export interface ProgramOutput {
   stdout: string;
   stderr: string;
+  timeUsage?: number;
+  memoryUsage?: number;
+  files?: VirtualFile[];
 }
 
 export interface SimulationOutput {

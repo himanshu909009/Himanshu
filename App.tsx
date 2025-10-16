@@ -5,8 +5,9 @@ import { DashboardView } from './views/DashboardView';
 import { CompilerView } from './views/CompilerView';
 import { ProblemsView } from './views/ProblemsView';
 import { CompeteView } from './views/CompeteView';
+import { ProfileView } from './views/ProfileView';
 
-type View = 'dashboard' | 'compiler' | 'problems' | 'compete';
+type View = 'dashboard' | 'compiler' | 'problems' | 'compete' | 'profile';
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('compiler');
@@ -21,6 +22,8 @@ function App() {
         return <ProblemsView />;
       case 'compete':
         return <CompeteView />;
+      case 'profile':
+        return <ProfileView />;
       default:
         return <CompilerView />;
     }

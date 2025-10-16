@@ -2,7 +2,7 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 // Fix: Use 'import type' for type-only imports and combine them.
-import type { Language, SimulationOutput } from '../types';
+import type { Language, SimulationOutput, VirtualFile } from '../types';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -31,6 +31,20 @@ const responseSchema = {
             properties: {
                 stdout: { type: Type.STRING },
                 stderr: { type: Type.STRING },
+                timeUsage: { type: Type.NUMBER, description: "Execution time in milliseconds." },
+                memoryUsage: { type: Type.NUMBER, description: "Memory usage in kilobytes." },
+                files: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            id: { type: Type.STRING },
+                            name: { type: Type.STRING },
+                            content: { type: Type.STRING },
+                        },
+                        required: ["id", "name", "content"],
+                    }
+                }
             },
             required: ["stdout", "stderr"],
         },
@@ -39,35 +53,50 @@ const responseSchema = {
 };
 
 export async function runCodeSimulation(
-  code: string,
   language: Language,
+  files: VirtualFile[],
+  activeFileId: string,
   input: string
 ): Promise<SimulationOutput> {
-  const prompt = `
-    You are a virtual code runner. Your task is to simulate the compilation and execution of the provided code snippet. You must act exactly like a real compiler and runtime environment (e.g., GCC, Python interpreter, JVM).
+  const activeFile = files.find(f => f.id === activeFileId);
+  if (!activeFile) {
+      throw new Error("No active file found to run.");
+  }
 
-    **Input:**
+  const prompt = `
+    You are a virtual code runner with a file system. Your task is to simulate the compilation and execution of the provided code. Act exactly like a real environment (e.g., GCC, Python interpreter).
+
+    **Execution Context:**
+    - The entrypoint for execution is the file named: "${activeFile.name}"
     - Language: ${language}
-    - Code:
-    \`\`\`${language.toLowerCase()}
-    ${code}
-    \`\`\`
-    - Standard Input (stdin):
+
+    **Virtual File System:**
+    The user has provided the following files. The code can read from and write to these files as if they were on a local disk.
+    ${files.map(f => `
+    - File Name: "${f.name}"
+      Content:
+      \`\`\`
+      ${f.content}
+      \`\`\`
+    `).join('')}
+
+    **Standard Input (stdin):**
     \`\`\`
     ${input}
     \`\`\`
 
     **Instructions:**
-    1.  **Analyze the code:** Check for syntax errors first.
-    2.  **Simulate Compilation (if applicable for the language):**
-        *   If there are syntax errors, stop and report them in the \`compilation\` field. The \`output\` and \`execution\` fields should be empty. **Crucially, if the error message contains a line and column number, you MUST extract them into the \`line\` and \`column\` fields respectively.**
-        *   If compilation is successful, report success. For interpreted languages like Python/JS, the message should reflect that.
-    3.  **Simulate Execution:**
-        *   If compilation succeeded, simulate running the code with the provided standard input.
-        *   Check for runtime errors (e.g., division by zero, index out of bounds). If a runtime error occurs, report it in the \`output.stderr\` field.
-        *   If the code runs successfully, capture its standard output (stdout) and place it in the \`output.stdout\` field.
-    4.  **Format the Output:**
-        *   You MUST respond with a single, valid JSON object that strictly adheres to the provided schema. Do not include any text, backticks, or explanations outside of the JSON structure.
+    1.  **Analyze and Compile:**
+        *   Analyze the entrypoint file ("${activeFile.name}") for syntax errors.
+        *   If there are compilation errors, stop. Report them in \`compilation\`. **If the error has a line/column, you MUST extract them.**
+        *   If compilation succeeds, report success.
+    2.  **Simulate Execution & Performance:**
+        *   Run the code.
+        *   **Simulate performance:** Provide realistic estimates for \`timeUsage\` (in milliseconds) and \`memoryUsage\` (in kilobytes). For simple 'Hello World' programs, this should be very low (e.g., < 5ms, < 1024KB).
+        *   **Simulate File I/O:** If the code writes to a file (new or existing), you must capture the final state of that file.
+    3.  **Format the Output:**
+        *   You MUST respond with a single, valid JSON object that strictly adheres to the schema.
+        *   **In the \`output.files\` array, return ONLY the files that were created or modified during execution.** Do not return unchanged files. If no files were changed, return an empty array or omit the field.
   `;
 
   try {
@@ -83,7 +112,6 @@ export async function runCodeSimulation(
     const jsonText = response.text.trim();
     const result = JSON.parse(jsonText);
 
-    // Basic validation to ensure the parsed object fits the expected structure.
     if (result.compilation && result.output) {
       return result as SimulationOutput;
     } else {
