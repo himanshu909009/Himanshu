@@ -100,6 +100,19 @@ export interface ContestProblem {
     points: number;
 }
 
+export interface User {
+  name: string;
+  username: string;
+  avatarUrl: string;
+  email?: string;
+  college?: string;
+  course?: string;
+  stats: {
+    label: string;
+    value: number;
+  }[];
+}
+
 export interface RecentActivityItem {
     id: number;
     title: string;

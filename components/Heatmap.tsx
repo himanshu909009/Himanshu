@@ -1,17 +1,32 @@
 import React from 'react';
 
-// Generates dummy data for the last year
+// Generates specific data for the last year as per user request
 const generateHeatmapData = () => {
   const data = new Map<string, number>();
   const today = new Date();
+  const currentYear = today.getFullYear();
+  
+  // As requested, only show activity on 5 specific days in October
+  const activeDaysInOctober = [3, 6, 13, 21, 28];
+
   for (let i = 0; i < 365; i++) {
-    const date = new Date(today);
+    const date = new Date();
     date.setDate(today.getDate() - i);
     const dateString = date.toISOString().split('T')[0];
-    data.set(dateString, Math.floor(Math.random() * 15)); // Random activity count
+
+    let activity = 0; // Default to no activity
+
+    // Check if the current date is one of the active days in October of the current year
+    if (date.getMonth() === 9 && date.getFullYear() === currentYear && activeDaysInOctober.includes(date.getDate())) {
+        // Assign some random activity to make the squares green
+        activity = Math.floor(Math.random() * 10) + 5; 
+    }
+    
+    data.set(dateString, activity);
   }
   return data;
 };
+
 
 const contributionData = generateHeatmapData();
 

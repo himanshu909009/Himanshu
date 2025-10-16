@@ -6,11 +6,14 @@ import { CompilerView } from './views/CompilerView';
 import { ProblemsView } from './views/ProblemsView';
 import { CompeteView } from './views/CompeteView';
 import { ProfileView } from './views/ProfileView';
+import type { User } from './types';
+import { INITIAL_USER } from './constants';
 
 type View = 'courses' | 'compiler' | 'problems' | 'compete' | 'profile';
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('compiler');
+  const [user, setUser] = useState<User>(INITIAL_USER);
 
   const renderView = () => {
     switch (currentView) {
@@ -23,7 +26,7 @@ function App() {
       case 'compete':
         return <CompeteView />;
       case 'profile':
-        return <ProfileView />;
+        return <ProfileView user={user} onUserUpdate={setUser} />;
       default:
         return <CompilerView />;
     }
@@ -31,7 +34,7 @@ function App() {
 
   return (
     <div className="bg-gray-900 text-white min-h-screen">
-      <Header currentView={currentView} onNavigate={setCurrentView as (view: string) => void} />
+      <Header user={user} currentView={currentView} onNavigate={setCurrentView as (view: string) => void} />
       <main>
         {renderView()}
       </main>

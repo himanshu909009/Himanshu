@@ -1,5 +1,4 @@
 
-
 import { GoogleGenAI, Type } from "@google/genai";
 // Fix: Use 'import type' for type-only imports and combine them.
 import type { Language, SimulationOutput, VirtualFile } from '../types';
@@ -142,4 +141,42 @@ export async function runCodeSimulation(
     }
     throw new Error("An unknown error occurred during code simulation.");
   }
+}
+
+export async function getAiErrorExplanation(language: Language, code: string, errorMessage: string): Promise<string> {
+    const prompt = `
+        You are a friendly and helpful AI coding tutor. A beginner programmer has encountered an error. 
+        Your task is to explain the error in a simple, easy-to-understand way and suggest a fix.
+
+        **Language:** ${language}
+
+        **The user's code:**
+        \`\`\`${language}
+        ${code}
+        \`\`\`
+
+        **The compilation error message:**
+        \`\`\`
+        ${errorMessage}
+        \`\`\`
+
+        **Instructions:**
+        1.  Start by greeting the user in a friendly tone.
+        2.  Explain what the error message means in plain English, avoiding technical jargon as much as possible.
+        3.  Point out the specific line or part of the code that is causing the problem.
+        4.  Clearly explain *why* it's an error.
+        5.  Suggest one or more ways to fix the code. You can provide a corrected code snippet if it's helpful.
+        6.  Keep your explanation concise and encouraging.
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+        return response.text;
+    } catch (error) {
+        console.error("Error getting AI explanation:", error);
+        return "Sorry, I couldn't analyze the error. Please try again.";
+    }
 }
