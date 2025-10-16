@@ -1,24 +1,39 @@
+// Fix: Implemented the main App component with view routing logic.
 import React, { useState } from 'react';
 import { Header } from './components/Header';
-import { CompilerView } from './views/CompilerView';
 import { DashboardView } from './views/DashboardView';
+import { CompilerView } from './views/CompilerView';
+import { ProblemsView } from './views/ProblemsView';
+import { CompeteView } from './views/CompeteView';
 
-type View = 'compiler' | 'dashboard';
+type View = 'dashboard' | 'compiler' | 'problems' | 'compete';
 
 function App() {
-    const [view, setView] = useState<View>('compiler');
-    
-    const themeClass = 'bg-gray-900 text-gray-300';
+  const [currentView, setCurrentView] = useState<View>('compiler');
 
-    return (
-        <div className={`min-h-screen transition-colors duration-300 ${themeClass}`}>
-            <Header currentView={view} setView={setView} />
-            <main>
-                {view === 'compiler' && <CompilerView />}
-                {view === 'dashboard' && <DashboardView />}
-            </main>
-        </div>
-    );
+  const renderView = () => {
+    switch (currentView) {
+      case 'dashboard':
+        return <DashboardView />;
+      case 'compiler':
+        return <CompilerView />;
+      case 'problems':
+        return <ProblemsView />;
+      case 'compete':
+        return <CompeteView />;
+      default:
+        return <CompilerView />;
+    }
+  };
+
+  return (
+    <div className="bg-gray-900 text-white min-h-screen">
+      <Header currentView={currentView} onNavigate={setCurrentView as (view: string) => void} />
+      <main>
+        {renderView()}
+      </main>
+    </div>
+  );
 }
 
 export default App;

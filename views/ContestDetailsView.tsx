@@ -1,0 +1,1 @@
+full contents of views/ContestDetailsView.tsx
