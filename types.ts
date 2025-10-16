@@ -9,6 +9,8 @@ export interface LanguageOption {
 export interface CompilationResult {
   status: 'success' | 'error';
   message: string;
+  line?: number;
+  column?: number;
 }
 
 export interface ExecutionResult {
@@ -67,4 +69,17 @@ export interface ContestProblem {
     title: string;
     difficulty: 'Easy' | 'Medium' | 'Hard';
     points: number;
+}
+
+export type ThemeName = 'dark' | 'light' | 'solarized' | 'monokai';
+
+export interface Theme {
+  name: ThemeName;
+  background: string;
+  text: string;
+  lineNumber: string;
+  lineNumberBg: string;
+  border: string;
+  caret: string;
+  lineNumberBorder?: string;
 }

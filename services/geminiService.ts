@@ -14,6 +14,8 @@ const responseSchema = {
             properties: {
                 status: { type: Type.STRING, enum: ["success", "error"] },
                 message: { type: Type.STRING },
+                line: { type: Type.NUMBER, description: "The line number of the error, if applicable." },
+                column: { type: Type.NUMBER, description: "The column number or character position of the error, if applicable." },
             },
             required: ["status", "message"],
         },
@@ -58,7 +60,7 @@ export async function runCodeSimulation(
     **Instructions:**
     1.  **Analyze the code:** Check for syntax errors first.
     2.  **Simulate Compilation (if applicable for the language):**
-        *   If there are syntax errors, stop and report them in the \`compilation\` field. The \`output\` and \`execution\` fields should be empty.
+        *   If there are syntax errors, stop and report them in the \`compilation\` field. The \`output\` and \`execution\` fields should be empty. **Crucially, if the error message contains a line and column number, you MUST extract them into the \`line\` and \`column\` fields respectively.**
         *   If compilation is successful, report success. For interpreted languages like Python/JS, the message should reflect that.
     3.  **Simulate Execution:**
         *   If compilation succeeded, simulate running the code with the provided standard input.

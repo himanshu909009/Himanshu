@@ -5,9 +5,9 @@ import { InputSection } from '../components/InputSection';
 import { OutputDisplay } from '../components/OutputDisplay';
 import { LANGUAGES, DEFAULT_CODE } from '../constants';
 import { runCodeSimulation } from '../services/geminiService';
-import type { Language, SimulationOutput } from '../types';
-
-const SettingsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-400 hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>;
+import type { Language, SimulationOutput, ThemeName } from '../types';
+import { ThemeSelector } from '../components/ThemeSelector';
+import { THEMES } from '../themes';
 
 const InfoSection = () => (
     <div className="bg-gray-800 p-8 rounded-lg mt-8 text-gray-400">
@@ -36,12 +36,25 @@ export function CompilerView() {
     const [output, setOutput] = useState<SimulationOutput | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [theme, setTheme] = useState<ThemeName>('dark');
+    const [errorLine, setErrorLine] = useState<number | null>(null);
+    const [errorColumn, setErrorColumn] = useState<number | null>(null);
 
     const handleLanguageChange = (selectedLanguage: Language) => {
         setLanguage(selectedLanguage);
         setCode(DEFAULT_CODE[selectedLanguage] || '');
         setOutput(null);
         setError(null);
+        setErrorLine(null);
+        setErrorColumn(null);
+    };
+    
+    const handleCodeChange = (newCode: string) => {
+        setCode(newCode);
+        if (errorLine !== null) {
+            setErrorLine(null);
+            setErrorColumn(null);
+        }
     };
 
     const handleRunCode = useCallback(async () => {
@@ -52,9 +65,15 @@ export function CompilerView() {
         setIsLoading(true);
         setError(null);
         setOutput(null);
+        setErrorLine(null);
+        setErrorColumn(null);
         try {
             const result = await runCodeSimulation(code, language, input);
             setOutput(result);
+            if (result.compilation.status === 'error') {
+                setErrorLine(result.compilation.line ?? null);
+                setErrorColumn(result.compilation.column ?? null);
+            }
         } catch (e) {
             const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
             setError(errorMessage);
@@ -77,15 +96,23 @@ export function CompilerView() {
                                 onLanguageChange={handleLanguageChange}
                             />
                         </div>
-                        <CodeEditor code={code} onCodeChange={setCode} />
+                        <CodeEditor
+                            code={code}
+                            onCodeChange={handleCodeChange}
+                            theme={THEMES[theme]}
+                            errorLine={errorLine}
+                            errorColumn={errorColumn}
+                        />
                     </div>
 
                     {/* Right Pane */}
                     <div className="flex flex-col gap-4 lg:w-2/5 h-full">
                          <div className="flex justify-end items-center gap-4 p-2 rounded-md">
-                            <button aria-label="Settings">
-                                <SettingsIcon />
-                            </button>
+                            <ThemeSelector
+                                themes={THEMES}
+                                selectedTheme={theme}
+                                onThemeChange={setTheme}
+                            />
                             <button
                                 onClick={handleRunCode}
                                 disabled={isLoading}

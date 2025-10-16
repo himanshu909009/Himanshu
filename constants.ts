@@ -16,9 +16,9 @@ export const DEFAULT_CODE: Record<Language, string> = {
 };
 
 export const COURSES: Course[] = [
-    { title: 'Data Structures & Algorithms', category: 'Programming', lessons: 24, hours: 12, level: 'Intermediate', color: 'bg-blue-500' },
-    { title: 'Web Development Bootcamp', category: 'Web Development', lessons: 56, hours: 40, level: 'Beginner', color: 'bg-green-500' },
-    { title: 'Machine Learning Foundations', category: 'Data Science', lessons: 32, hours: 20, level: 'Advanced', color: 'bg-purple-500' },
+    { title: 'Data Structures & Algorithms', category: 'Programming', lessons: 45, hours: 45, level: 'Intermediate', color: 'bg-blue-500' },
+    { title: 'Object Oriented Programming using C++', category: 'Programming', lessons: 45, hours: 45, level: 'Beginner', color: 'bg-green-500' },
+    { title: 'Data Structure using C', category: 'Programming', lessons: 45, hours: 45, level: 'Advanced', color: 'bg-purple-500' },
 ];
 
 export const PRACTICE_PROBLEMS: PracticeProblem[] = [
