@@ -1,5 +1,5 @@
-// Fix: Added definitions for all required types.
-export type Language = 'python' | 'javascript' | 'java' | 'cpp' | 'c';
+// Fix: Populated the file with type definitions used across the application.
+export type Language = 'c' | 'cpp' | 'java' | 'javascript' | 'python';
 
 export interface LanguageOption {
   id: Language;
@@ -15,33 +15,41 @@ export interface VirtualFile {
 export interface CompilationResult {
   status: 'success' | 'error';
   message: string;
-  line?: number | null;
-  column?: number | null;
+  line?: number;
+  column?: number;
 }
 
-export interface ExecutionResult {
-  stdin: string;
-}
-
-export type TranscriptPart = {
+export interface TranscriptPart {
   type: 'stdout' | 'stdin' | 'stderr';
   content: string;
-};
+}
 
-export interface OutputResult {
+export interface ProgramOutput {
   stdout: string;
   stderr: string;
   transcript?: TranscriptPart[];
   timeUsage?: number;
   memoryUsage?: number;
+  isExecutionFinished: boolean;
   files?: VirtualFile[];
-  isExecutionFinished?: boolean;
 }
 
 export interface SimulationOutput {
   compilation: CompilationResult;
-  execution: ExecutionResult;
-  output: OutputResult;
+  execution: {
+    stdin: string;
+  };
+  output: ProgramOutput;
+}
+
+export interface User {
+  name: string;
+  username: string;
+  avatarUrl: string;
+  email: string;
+  college?: string;
+  course?: string;
+  stats: { label: string; value: number | string }[];
 }
 
 export type ThemeName = 'dark' | 'light' | 'solarized' | 'monokai';
@@ -62,60 +70,77 @@ export interface Course {
   category: string;
   lessons: number;
   hours: number;
-  level: 'Beginner' | 'Intermediate' | 'Advanced';
+  level: string;
   color: string;
 }
 
 export interface PracticeProblem {
-    name: string;
-    description: string;
-    problems: number;
-    level: 'Beginner' | 'Intermediate' | 'Advanced';
-    icon: string;
-    color: string;
+  name: string;
+  description: string;
+  problems: number;
+  level: string;
+  icon: string;
+  color: string;
 }
 
 export interface Contest {
-    title: string;
-    startTime: string;
-    duration: string;
-    participants: number;
+  title: string;
+  startTime: string;
+  duration: string;
+  participants: number;
 }
 
 export interface PastContest {
-    name: string;
-    date: string;
+  name: string;
+  date: string;
 }
 
 export interface LeaderboardUser {
-    rank: number;
-    name: string;
-    score: number;
+  rank: number;
+  name: string;
+  score: number;
+  avatarUrl?: string;
 }
 
 export interface ContestProblem {
-    id: string;
-    title: string;
-    difficulty: 'Easy' | 'Medium' | 'Hard';
-    points: number;
-}
-
-export interface User {
-  name: string;
-  username: string;
-  avatarUrl: string;
-  email?: string;
-  college?: string;
-  course?: string;
-  stats: {
-    label: string;
-    value: number;
-  }[];
+  id: string;
+  title: string;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  points: number;
 }
 
 export interface RecentActivityItem {
+  id: number;
+  title: string;
+  status: 'Accepted' | 'Wrong Answer' | 'Time Limit Exceeded';
+  timestamp: string;
+}
+
+export interface CourseLesson {
     id: number;
     title: string;
-    status: 'Accepted' | 'Wrong Answer' | 'Time Limit Exceeded';
-    timestamp: string;
+    duration: string;
+    type: 'video' | 'reading' | 'quiz' | 'practice';
+}
+
+export interface CourseModule {
+    id: number;
+    title: string;
+    lessons: CourseLesson[];
+}
+
+export interface CourseDetails {
+    title: string;
+    description: string;
+    icon: string;
+    tags: {
+        certification: boolean;
+        rating: string;
+    };
+    stats: {
+        lessons: number;
+        hours: number;
+        problems: number;
+    };
+    modules: CourseModule[];
 }

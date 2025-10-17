@@ -1,153 +1,161 @@
-// Fix: Added mock data for constants used throughout the application.
-import type { Language, LanguageOption, Course, PracticeProblem, Contest, PastContest, LeaderboardUser, ContestProblem, RecentActivityItem, User } from './types';
+// Fix: Populated the file with constant data used across the application.
+import type { Language, LanguageOption, User, Course, PracticeProblem, Contest, PastContest, LeaderboardUser, ContestProblem, RecentActivityItem, CourseDetails } from './types';
 
 export const LANGUAGES: LanguageOption[] = [
-  { id: 'python', name: 'Python' },
-  { id: 'javascript', name: 'JavaScript' },
-  { id: 'java', name: 'Java' },
-  { id: 'cpp', name: 'C++' },
   { id: 'c', name: 'C' },
+  { id: 'cpp', name: 'C++' },
+  { id: 'java', name: 'Java' },
+  { id: 'javascript', name: 'JavaScript' },
+  { id: 'python', name: 'Python' },
 ];
 
 export const DEFAULT_CODE: Record<Language, string> = {
-  python: 'def main():\n    print("Hello, World!")\n\nif __name__ == "__main__":\n    main()',
-  javascript: 'console.log("Hello, World!");',
-  java: 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}',
-  cpp: '#include <iostream>\n\nint main() {\n    std::cout << "Hello, World!" << std::endl;\n    return 0;\n}',
-  c: '#include <stdio.h> // Includes the standard Input/output library\n\nint main() {\n    // Declare integer variables to store the two numbers and their sum\n    int num1, num2, sum;\n\n    // Prompt the user to enter the first number\n    printf("Enter the first integer: ");\n\n    // Read the first integer from the user and store it in num1\n    scanf("%d", &num1);\n\n    // Prompt the user to enter the second integer\n    printf("Enter the second integer: ");\n\n    // Read the second integer from the user and store it in num2\n    scanf("%d", &num2);\n\n    // Calculate the sum of the two numbers\n    sum = num1 + num2;\n\n    // Print the result to the console\n    printf("The sum of %d and %d is: %d\\n", num1, num2, sum);\n\n    // Indicate successful program execution\n    return 0;\n}',
+  c: `#include <stdio.h>
+
+int main() {
+    printf("Hello, World!\\n");
+    return 0;
+}`,
+  cpp: `#include <iostream>
+
+int main() {
+    std::cout << "Hello, World!" << std::endl;
+    return 0;
+}`,
+  java: `public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello, World!");
+    }
+}`,
+  javascript: `console.log("Hello, World!");`,
+  python: `print("Hello, World!")`,
 };
 
-export const COURSES: Course[] = [
-    { title: 'Data Structures & Algorithms', category: 'Computer Science', lessons: 24, hours: 12, level: 'Intermediate', color: 'bg-blue-500' },
-    { title: 'Introduction to Python', category: 'Programming', lessons: 18, hours: 8, level: 'Beginner', color: 'bg-yellow-500' },
-    { title: 'Object Oriented Programming', category: 'Programming', lessons: 30, hours: 20, level: 'Intermediate', color: 'bg-green-500' },
-    { title: 'Problem Solving using C', category: 'Programming', lessons: 25, hours: 15, level: 'Beginner', color: 'bg-indigo-500' },
-    { title: 'Computer Organization & Architecture', category: 'Computer Science', lessons: 35, hours: 25, level: 'Advanced', color: 'bg-purple-500' },
-];
-
-export const PRACTICE_PROBLEMS: PracticeProblem[] = [
-  {
-    name: 'Python',
-    description: 'Master Python with our curated list of problems.',
-    problems: 150,
-    level: 'Beginner',
-    icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>',
-    color: 'bg-yellow-600',
-  },
-  {
-    name: 'Java',
-    description: 'Solve problems and build your skills in Java.',
-    problems: 200,
-    level: 'Intermediate',
-    icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/></svg>',
-    color: 'bg-red-600',
-  },
-  {
-    name: 'C++',
-    description: 'Challenge yourself with complex C++ problems.',
-    problems: 250,
-    level: 'Advanced',
-    icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M12 6V3m0 18v-3" /></svg>',
-    color: 'bg-blue-600',
-  },
-  {
-    name: 'JavaScript',
-    description: 'Explore web-related challenges with JavaScript.',
-    problems: 180,
-    level: 'Intermediate',
-    icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>',
-    color: 'bg-yellow-500',
-  },
-];
-
-export const SUBJECT_PROBLEMS: PracticeProblem[] = [
-  {
-    name: 'Core Java',
-    description: 'Build a strong foundation in Java programming fundamentals.',
-    problems: 120,
-    level: 'Beginner',
-    icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/></svg>',
-    color: 'bg-orange-600',
-  },
-  {
-    name: 'Object Oriented Programming C++',
-    description: 'Understand the principles of OOP with C++.',
-    problems: 180,
-    level: 'Intermediate',
-    icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>',
-    color: 'bg-sky-600',
-  },
-  {
-    name: 'Data Structure in Java',
-    description: 'Learn to implement common data structures in Java.',
-    problems: 220,
-    level: 'Intermediate',
-    icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>',
-    color: 'bg-teal-600',
-  },
-  {
-    name: 'Foundational Programming in C',
-    description: 'Start your coding journey with the C language.',
-    problems: 100,
-    level: 'Beginner',
-    icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>',
-    color: 'bg-gray-600',
-  },
-  {
-    name: 'Advanced Java Programming',
-    description: 'Tackle complex topics like concurrency and streams in Java.',
-    problems: 160,
-    level: 'Advanced',
-    icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>',
-    color: 'bg-rose-600',
-  },
-];
-
-
-export const CONTESTS: Contest[] = [
-    { title: 'Weekly Contest #345', startTime: 'Starts in 2d 4h', duration: '90 mins', participants: 1254 },
-    { title: 'Biweekly Contest #101', startTime: 'Starts in 9d 6h', duration: '120 mins', participants: 876 },
-];
-
-export const PAST_CONTESTS: PastContest[] = [
-    { name: 'Weekly Contest #344', date: 'July 15, 2024' },
-    { name: 'Biweekly Contest #100', date: 'July 8, 2024' },
-    { name: 'Weekly Contest #343', date: 'July 1, 2024' },
-];
-
-export const LEADERBOARD_USERS: LeaderboardUser[] = [
-    { rank: 1, name: 'Himanshu', score: 2450 },
-    { rank: 2, name: 'Ben', score: 2380 },
-    { rank: 3, name: 'Charlie', score: 2310 },
-    { rank: 4, name: 'David', score: 2250 },
-    { rank: 5, name: 'Eva', score: 2200 },
-];
-
-export const CONTEST_PROBLEMS: ContestProblem[] = [
-    { id: 'A', title: 'Two Sum Variant', difficulty: 'Easy', points: 3 },
-    { id: 'B', title: 'Find Subarray with Given Sum', difficulty: 'Medium', points: 4 },
-    { id: 'C', title: 'Minimum Window Substring', difficulty: 'Hard', points: 6 },
-    { id: 'D', title: 'Trapping Rain Water II', difficulty: 'Hard', points: 7 },
-];
-
 export const INITIAL_USER: User = {
-  name: 'Himanshu',
-  username: '@himanshu',
-  avatarUrl: `data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCADIAJoDASIAAhEBAxEB/8QAGwABAQACAwEAAAAAAAAAAAAAAAEFBgIDBAf/xAAzEAABAwMBBgQFAwUBAAAAAAABAAIDBAUREgYhExQxQVFhInGBkbHwIzJCocHR4WJykv/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwD6hQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQh-CAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQh-CAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQhCAQh-`,
-  email: 'himanshu@example.com',
-  college: 'SAGE University',
-  course: 'BTECH (CSE)',
+  name: 'Alex Doe',
+  username: '@alexdoe',
+  avatarUrl: 'https://i.pravatar.cc/150?u=alexdoe',
+  email: 'alex.doe@example.com',
+  college: 'State University',
+  course: 'Computer Science',
   stats: [
-      { label: 'Problems Solved', value: 128 },
-      { label: 'Contests Attended', value: 22 },
-      { label: 'Rank', value: 42 },
+    { label: 'Rank', value: 1234 },
+    { label: 'Problems', value: 150 },
+    { label: 'Points', value: 3200 },
   ],
 };
 
-export const RECENT_ACTIVITIES: RecentActivityItem[] = [
-    { id: 1, title: 'Two Sum', status: 'Accepted', timestamp: '2 hours ago' },
-    { id: 2, title: 'Median of Two Sorted Arrays', status: 'Wrong Answer', timestamp: '1 day ago' },
-    { id: 3, title: 'Longest Palindromic Substring', status: 'Accepted', timestamp: '3 days ago' },
-    // Fix: Added the missing 'title' property key.
-    { id: 4, title: 'Regular Expression Matching', status: 'Time Limit Exceeded', timestamp: '5 days ago' },
+export const COURSES: Course[] = [
+    { title: 'Introduction to C++', category: 'Programming', lessons: 24, hours: 10, level: 'Beginner', color: 'bg-blue-500' },
+    { title: 'Data Structures in Java', category: 'Algorithms', lessons: 32, hours: 18, level: 'Intermediate', color: 'bg-red-500' },
+    { title: 'Web Development with JS', category: 'Web Dev', lessons: 45, hours: 25, level: 'Intermediate', color: 'bg-yellow-500' },
 ];
+
+const C_PLUS_PLUS_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M12 12H16"/><path d="M14 10V14"/><path d="M18 12h4"/><path d="M20 10v4"/><path d="M8 16H4.5a2.5 2.5 0 1 1 0-5H8"/><path d="M5 12v0"/><path d="M20 18a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-2z"/></svg>`;
+const PYTHON_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M10.2 2.5c-.2.3-.4.6-.5.9-.3 1.2.3 2.5 1.5 2.8 1.2.3 2.5-.3 2.8-1.5.3-1.2-.3-2.5-1.5-2.8-.3-.1-.7-.1-1 0l-1.3 1.6V15c0 3.3 2.7 6 6 6h2"/><path d="M13.8 21.5c.2-.3.4-.6.5-.9.3-1.2-.3-2.5-1.5-2.8-1.2-.3-2.5.3-2.8 1.5-.3 1.2.3 2.5 1.5 2.8.3.1.7.1 1 0l1.3-1.6V9c0-3.3-2.7-6-6-6H7"/></svg>`;
+const ALGORITHMS_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m8 17 4 4 4-4"/></svg>`;
+
+export const PRACTICE_PROBLEMS: PracticeProblem[] = [
+  { name: 'C++', description: 'Master C++ from basics to advanced topics like OOP and memory management.', problems: 120, level: 'All Levels', icon: C_PLUS_PLUS_ICON, color: 'bg-blue-600' },
+  { name: 'Python', description: 'Solve problems with Python, focusing on its clean syntax and powerful libraries.', problems: 150, level: 'All Levels', icon: PYTHON_ICON, color: 'bg-yellow-500' },
+];
+
+export const SUBJECT_PROBLEMS: PracticeProblem[] = [
+  { name: 'Algorithms', description: 'Sharpen your problem-solving skills with a wide range of algorithmic challenges.', problems: 250, level: 'Intermediate', icon: ALGORITHMS_ICON, color: 'bg-green-600' },
+];
+
+export const CONTESTS: Contest[] = [
+  { title: 'Weekly Contest #345', startTime: 'Starts in 2d 4h 30m', duration: '90 mins', participants: 1250 },
+  { title: 'Biweekly Contest #112', startTime: 'Starts in 9d 4h 30m', duration: '120 mins', participants: 980 },
+];
+
+export const PAST_CONTESTS: PastContest[] = [
+  { name: 'Weekly Contest #344', date: 'July 15, 2024' },
+  { name: 'Weekly Contest #343', date: 'July 8, 2024' },
+];
+
+export const LEADERBOARD_USERS: LeaderboardUser[] = [
+  { rank: 1, name: 'CodeMaster', score: 10500 },
+  { rank: 2, name: 'AlgoQueen', score: 10250 },
+  { rank: 3, name: 'BytePuzzler', score: 9800 },
+];
+
+export const CONTEST_PROBLEMS: ContestProblem[] = [
+  { id: 'A', title: 'Two Sum Variant', difficulty: 'Easy', points: 300 },
+  { id: 'B', title: 'Max Subarray Sum', difficulty: 'Medium', points: 500 },
+  { id: 'C', title: 'Binary Tree Paths', difficulty: 'Medium', points: 600 },
+  { id: 'D', title: 'Word Ladder', difficulty: 'Hard', points: 1000 },
+];
+
+export const RECENT_ACTIVITIES: RecentActivityItem[] = [
+  { id: 1, title: 'Two Sum Variant', status: 'Accepted', timestamp: '5 minutes ago' },
+  { id: 2, title: 'Max Subarray Sum', status: 'Wrong Answer', timestamp: '1 hour ago' },
+  { id: 3, title: 'Binary Tree Paths', status: 'Time Limit Exceeded', timestamp: '3 hours ago' },
+];
+
+export const COURSE_DETAILS: Record<string, CourseDetails> = {
+    'C++': {
+        title: 'Comprehensive C++',
+        description: 'An in-depth course on C++, covering everything from basic syntax to advanced features like templates, STL, and modern C++ standards. Perfect for beginners and those looking to strengthen their C++ skills for competitive programming and software development.',
+        icon: C_PLUS_PLUS_ICON,
+        tags: {
+            certification: true,
+            rating: '4.8 (1,234 reviews)',
+        },
+        stats: {
+            lessons: 48,
+            hours: 30,
+            problems: 120,
+        },
+        modules: [
+            { id: 1, title: 'Module 1: C++ Basics', lessons: [
+                { id: 1, title: 'Introduction', duration: '10 min', type: 'video' },
+                { id: 2, title: 'Variables & Data Types', duration: '20 min', type: 'reading' },
+            ]},
+            { id: 2, title: 'Module 2: Control Flow', lessons: [
+                { id: 3, title: 'If-Else Statements', duration: '15 min', type: 'video' },
+                { id: 4, title: 'Loops', duration: '25 min', type: 'practice' },
+            ]}
+        ]
+    },
+    'Python': {
+        title: 'Python for Problem Solving',
+        description: 'Learn Python from scratch and apply it to solve a variety of programming challenges. This course focuses on Python\'s standard library, data structures, and best practices for writing clean, efficient code.',
+        icon: PYTHON_ICON,
+        tags: {
+            certification: true,
+            rating: '4.9 (2,500 reviews)',
+        },
+        stats: {
+            lessons: 55,
+            hours: 28,
+            problems: 150,
+        },
+        modules: [
+            { id: 1, title: 'Module 1: Python Fundamentals', lessons: [
+                { id: 1, title: 'Hello, Python!', duration: '8 min', type: 'video' },
+                { id: 2, title: 'Lists and Dictionaries', duration: '22 min', type: 'practice' },
+            ]}
+        ]
+    },
+    'Algorithms': {
+        title: 'Data Structures & Algorithms',
+        description: 'A comprehensive guide to common data structures and algorithms. This course is essential for passing technical interviews and improving your problem-solving abilities.',
+        icon: ALGORITHMS_ICON,
+        tags: {
+            certification: true,
+            rating: '4.9 (5,100 reviews)',
+        },
+        stats: {
+            lessons: 60,
+            hours: 40,
+            problems: 250,
+        },
+        modules: [
+            { id: 1, title: 'Module 1: Core Data Structures', lessons: [
+                { id: 1, title: 'Arrays and Strings', duration: '30 min', type: 'video' },
+                { id: 2, title: 'Linked Lists', duration: '45 min', type: 'practice' },
+            ]}
+        ]
+    }
+};

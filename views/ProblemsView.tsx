@@ -2,7 +2,11 @@ import React from 'react';
 import { PracticeCard } from '../components/PracticeCard';
 import { PRACTICE_PROBLEMS, SUBJECT_PROBLEMS } from '../constants';
 
-export function ProblemsView() {
+interface ProblemsViewProps {
+    onCourseSelect: (courseName: string) => void;
+}
+
+export function ProblemsView({ onCourseSelect }: ProblemsViewProps) {
     return (
         <div className="p-4 sm:p-6 lg:p-8">
             <div className="max-w-screen-2xl mx-auto">
@@ -15,7 +19,7 @@ export function ProblemsView() {
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         {PRACTICE_PROBLEMS.map(problem => (
-                            <PracticeCard key={problem.name} problem={problem} />
+                            <PracticeCard key={problem.name} problem={problem} onClick={() => onCourseSelect(problem.name)} />
                         ))}
                     </div>
                 </div>
@@ -29,7 +33,7 @@ export function ProblemsView() {
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         {SUBJECT_PROBLEMS.map(problem => (
-                            <PracticeCard key={problem.name} problem={problem} />
+                            <PracticeCard key={problem.name} problem={problem} onClick={() => onCourseSelect(problem.name)} />
                         ))}
                     </div>
                 </div>

@@ -3,6 +3,7 @@ import type { PracticeProblem } from '../types';
 
 interface PracticeCardProps {
   problem: PracticeProblem;
+  onClick: () => void;
 }
 
 const Icon: React.FC<{ svg: string }> = ({ svg }) => (
@@ -15,9 +16,9 @@ const LevelIcon = () => (
     </svg>
 );
 
-export const PracticeCard: React.FC<PracticeCardProps> = ({ problem }) => {
+export const PracticeCard: React.FC<PracticeCardProps> = ({ problem, onClick }) => {
   return (
-    <div className="bg-gray-800 rounded-lg overflow-hidden flex flex-col justify-between hover:scale-105 transition-transform duration-200 cursor-pointer">
+    <div onClick={onClick} className="bg-gray-800 rounded-lg overflow-hidden flex flex-col justify-between hover:scale-105 transition-transform duration-200 cursor-pointer">
         <div>
             <div className={`p-4 ${problem.color} flex items-center`}>
                 <Icon svg={problem.icon} />
