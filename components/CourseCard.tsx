@@ -3,11 +3,12 @@ import type { Course } from '../types';
 
 interface CourseCardProps {
   course: Course;
+  onSelect: () => void;
 }
 
-export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
+export const CourseCard: React.FC<CourseCardProps> = ({ course, onSelect }) => {
   return (
-    <div className="bg-gray-800 p-6 rounded-lg hover:bg-gray-700 transition">
+    <div onClick={onSelect} className="bg-gray-800 p-6 rounded-lg hover:bg-gray-700 transition cursor-pointer">
       <div className={`w-12 h-12 rounded-lg ${course.color} mb-4 flex items-center justify-center`}>
         {/* Placeholder for icon */}
       </div>

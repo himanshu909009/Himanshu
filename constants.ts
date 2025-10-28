@@ -1,5 +1,5 @@
 // Fix: Populated the file with constant data used across the application.
-import type { Language, LanguageOption, User, Course, PracticeProblem, Contest, PastContest, LeaderboardUser, ContestProblem, RecentActivityItem, CourseDetails } from './types';
+import type { Language, LanguageOption, User, Course, PracticeProblem, Contest, PastContest, LeaderboardUser, ContestProblem, RecentActivityItem, CourseDetails, Challenge } from './types';
 
 export const LANGUAGES: LanguageOption[] = [
   { id: 'c', name: 'C' },
@@ -32,7 +32,7 @@ int main() {
 };
 
 export const INITIAL_USER: User = {
-  name: 'Alex Doe',
+  name: 'Himanshu',
   username: '@alexdoe',
   avatarUrl: 'https://i.pravatar.cc/150?u=alexdoe',
   email: 'alex.doe@example.com',
@@ -46,9 +46,9 @@ export const INITIAL_USER: User = {
 };
 
 export const COURSES: Course[] = [
-    { title: 'Introduction to C++', category: 'Programming', lessons: 24, hours: 10, level: 'Beginner', color: 'bg-blue-500' },
+    { title: 'Object Oriented Programming in C++', category: 'Programming', lessons: 24, hours: 10, level: 'Beginner', color: 'bg-blue-500' },
     { title: 'Data Structures in Java', category: 'Algorithms', lessons: 32, hours: 18, level: 'Intermediate', color: 'bg-red-500' },
-    { title: 'Web Development with JS', category: 'Web Dev', lessons: 45, hours: 25, level: 'Intermediate', color: 'bg-yellow-500' },
+    { title: 'Data Structures Using C', category: 'Algorithms', lessons: 45, hours: 25, level: 'Intermediate', color: 'bg-green-500' },
 ];
 
 const C_PLUS_PLUS_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M12 12H16"/><path d="M14 10V14"/><path d="M18 12h4"/><path d="M20 10v4"/><path d="M8 16H4.5a2.5 2.5 0 1 1 0-5H8"/><path d="M5 12v0"/><path d="M20 18a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-2z"/></svg>`;
@@ -159,3 +159,24 @@ export const COURSE_DETAILS: Record<string, CourseDetails> = {
         ]
     }
 };
+
+export const CPP_CHALLENGES: Challenge[] = [
+    { 
+        id: 1, 
+        title: 'Say "Hello, World!" With C++', 
+        difficulty: 'Easy', 
+        category: 'C++ (Basic)', 
+        maxScore: 5, 
+        successRate: '98.61%', 
+        description: 'Practice printing to stdout.', 
+        isSolved: true,
+        objective: 'This is a simple challenge to help you practice printing to stdout. You may also want to complete Solve Me First in C++ before attempting this challenge.\n\nWe\'re starting out by printing the most famous computing phrase of all time! In the editor below, use either `printf` or `cout` to print the string `Hello, World!` to stdout.\n\nThe more popular command form is `cout`. It has the following basic form:\n`cout<<value_to_print<<value_to_print;`\n\nAny number of values can be printed using one command as shown.\n\nThe `printf` command comes from C language. It accepts an optional format specification and a list of variables. Two examples for printing a string are:\n`printf("%s", string); printf(string);`\n\nNote that neither method adds a newline. It only prints what you tell it to.',
+        outputFormat: 'Print `Hello, World!` to stdout.',
+        sampleOutput: 'Hello, World!',
+        boilerplateCode: '#include <iostream>\n#include <cstdio>\n\nusing namespace std;\n\nint main() {\n    printf("Hello, World!");\n    return 0;\n}',
+    },
+    { id: 2, title: 'Input and Output', difficulty: 'Easy', category: 'C++ (Basic)', maxScore: 5, successRate: '93.90%', description: 'Practice reading input and printing output.', isSolved: false },
+    { id: 3, title: 'Basic Data Types', difficulty: 'Easy', category: 'C++ (Basic)', maxScore: 10, successRate: '80.95%', description: 'Learn about C++ data types.', isSolved: false },
+    { id: 4, title: 'Conditional Statements', difficulty: 'Easy', category: 'C++ (Basic)', maxScore: 10, successRate: '96.73%', description: 'Use if-else statements to control flow.', isSolved: false },
+    { id: 5, title: 'For Loop', difficulty: 'Easy', category: 'C++ (Basic)', maxScore: 10, successRate: '94.92%', description: 'Practice with for loops.', isSolved: false },
+];

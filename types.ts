@@ -144,3 +144,18 @@ export interface CourseDetails {
     };
     modules: CourseModule[];
 }
+
+export interface Challenge {
+  id: number;
+  title: string;
+  difficulty: string;
+  category: string;
+  maxScore: number;
+  successRate: string;
+  description: string;
+  isSolved: boolean;
+  objective?: string;
+  outputFormat?: string;
+  sampleOutput?: string;
+  boilerplateCode?: string;
+}
