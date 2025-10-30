@@ -1,12 +1,16 @@
 
 
+
+
+
+
 import React, { useState, useCallback } from 'react';
 import { CodeEditor } from '../components/CodeEditor';
 import { OutputDisplay } from '../components/OutputDisplay';
 import { AiAgent } from '../components/AiAgent';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { LANGUAGES, DEFAULT_CODE } from '../constants';
-import { runCodeSimulation, getAiErrorExplanation } from '../services/geminiService';
+import { runCodeSimulation, getAiErrorExplanation, getAiCodeFeedback } from '../services/geminiService';
 import type { Language, SimulationOutput, ThemeName, VirtualFile } from '../types';
 import { THEMES } from '../themes';
 
@@ -94,19 +98,22 @@ export function CompilerView() {
         try {
             const result = await runCodeSimulation(language, [file], file.id, "");
             setOutput(result);
+            setIsAiLoading(true);
             if (result.compilation.status === 'error') {
                 setErrorLine(result.compilation.line ?? null);
                 setErrorColumn(result.compilation.column ?? null);
-                setIsAiLoading(true);
                 const explanation = await getAiErrorExplanation(language, code, result.compilation.message);
                 setAiExplanation(explanation);
-                setIsAiLoading(false);
+            } else {
+                const feedback = await getAiCodeFeedback(language, code);
+                setAiExplanation(feedback);
             }
         } catch (e) {
             const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
             setError(errorMessage);
         } finally {
             setIsLoading(false);
+            setIsAiLoading(false);
         }
     }, [language, code]);
     
@@ -129,19 +136,22 @@ export function CompilerView() {
         try {
             const result = await runCodeSimulation(language, [file], file.id, newInput);
             setOutput(result);
+            setIsAiLoading(true);
             if (result.compilation.status === 'error') {
                  setErrorLine(result.compilation.line ?? null);
                  setErrorColumn(result.compilation.column ?? null);
-                 setIsAiLoading(true);
                  const explanation = await getAiErrorExplanation(language, code, result.compilation.message);
                  setAiExplanation(explanation);
-                 setIsAiLoading(false);
+            } else {
+                const feedback = await getAiCodeFeedback(language, code);
+                setAiExplanation(feedback);
             }
         } catch (e) {
             const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
             setError(errorMessage);
         } finally {
             setIsLoading(false);
+            setIsAiLoading(false);
         }
     }, [language, code, input, isLoading]);
 
@@ -155,7 +165,7 @@ export function CompilerView() {
                     <div className="md:w-3/5 lg:w-2/3 flex flex-col h-full">
                         <div className={`flex justify-between items-center mb-2 px-2 py-1 ${currentThemeObject.lineNumberBg} rounded-t-md border-b ${currentThemeObject.border}`}>
                             <div className="flex items-center gap-4">
-                                <h1 className={`text-md font-semibold ${currentThemeObject.lineNumber}`}>{getFileName(language)}</h1>
+                                <h1 className={`text-lg font-semibold ${currentThemeObject.lineNumber}`}>{getFileName(language)}</h1>
                                 <LanguageSelector
                                     languages={LANGUAGES}
                                     selectedLanguage={language}
@@ -176,7 +186,7 @@ export function CompilerView() {
                                 <button
                                     onClick={handleRunCode}
                                     disabled={isLoading}
-                                    className="bg-blue-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-blue-700 transition disabled:bg-gray-500 disabled:cursor-not-allowed"
+                                    className="bg-blue-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-blue-700 transition disabled:bg-gray-500 disabled:cursor-not-allowed text-base"
                                 >
                                     {isLoading ? 'Running...' : 'Run'}
                                 </button>
@@ -188,6 +198,7 @@ export function CompilerView() {
                             theme={THEMES[theme]}
                             errorLine={errorLine}
                             errorColumn={errorColumn}
+                            aiExplanation={aiExplanation}
                         />
                     </div>
 
@@ -200,11 +211,14 @@ export function CompilerView() {
                             onInputSubmit={handleTerminalSubmit}
                             onClear={handleClearOutput}
                         />
-                        <AiAgent
-                            explanation={aiExplanation}
-                            isLoading={isAiLoading}
-                            theme={THEMES[theme]}
-                        />
+                        {(isAiLoading || aiExplanation) && (
+                            <AiAgent
+                                explanation={aiExplanation}
+                                isLoading={isAiLoading}
+                                theme={THEMES[theme]}
+                                onClose={() => setAiExplanation(null)}
+                            />
+                        )}
                     </div>
                 </div>
             </div>

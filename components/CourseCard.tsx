@@ -12,9 +12,9 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onSelect }) => {
       <div className={`w-12 h-12 rounded-lg ${course.color} mb-4 flex items-center justify-center`}>
         {/* Placeholder for icon */}
       </div>
-      <h3 className="text-lg font-bold text-white mb-2">{course.title}</h3>
-      <p className="text-sm text-gray-400 mb-4">{course.category}</p>
-      <div className="flex justify-between text-xs text-gray-400">
+      <h3 className="text-xl font-bold text-white mb-2">{course.title}</h3>
+      <p className="text-base text-gray-400 mb-4">{course.category}</p>
+      <div className="flex justify-between text-sm text-gray-400">
         <span>{course.lessons} Lessons</span>
         <span>{course.hours} hours</span>
         <span>{course.level}</span>

@@ -5,14 +5,13 @@ import { CoursesView } from './views/DashboardView';
 import { CompilerView } from './views/CompilerView';
 import { ChallengeListView } from './views/ChallengeListView';
 import { ChallengeEditorView } from './views/ChallengeEditorView';
-import type { User } from './types';
-import { INITIAL_USER, CPP_CHALLENGES } from './constants';
+import { CPP_CHALLENGES, PRACTICE_PROBLEMS, SUBJECT_PROBLEMS } from './constants';
+import { ProblemsView } from './views/ProblemsView';
 
-type View = 'courses' | 'compiler' | 'challengeList' | 'challengeEditor';
+type View = 'courses' | 'compiler' | 'practice' | 'challengeList' | 'challengeEditor';
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('compiler');
-  const [user] = useState<User>(INITIAL_USER);
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [selectedChallengeId, setSelectedChallengeId] = useState<number | null>(null);
 
@@ -32,14 +31,28 @@ function App() {
     switch (currentView) {
       case 'courses':
         return <CoursesView onCourseSelect={(courseTitle) => handleNavigate('challengeList', courseTitle)} />;
+      case 'practice':
+        return <ProblemsView onCourseSelect={(courseTitle) => handleNavigate('challengeList', courseTitle)} />;
       case 'compiler':
         return <CompilerView />;
       case 'challengeList':
-        if (selectedCourse === 'Object Oriented Programming in C++') {
+        const allPracticeProblems = [...PRACTICE_PROBLEMS, ...SUBJECT_PROBLEMS];
+        const cameFromPractice = allPracticeProblems.some(p => p.name === selectedCourse);
+        const backView: View = cameFromPractice ? 'practice' : 'courses';
+
+        // For this demo, we'll map a few different selections to the same C++ challenge list.
+        const supportedSelections = [
+          'Object Oriented Programming in C++',
+          'C++',
+          'Python',
+          'Algorithms',
+        ];
+
+        if (selectedCourse && supportedSelections.includes(selectedCourse)) {
           return <ChallengeListView 
             courseTitle={selectedCourse} 
             challenges={CPP_CHALLENGES} 
-            onBack={() => handleNavigate('courses')}
+            onBack={() => handleNavigate(backView)}
             onChallengeSelect={(challengeId) => handleNavigate('challengeEditor', challengeId)}
           />;
         }
@@ -47,8 +60,8 @@ function App() {
           <div className="p-8 text-center">
             <h1 className="text-xl font-bold">Challenges Not Available</h1>
             <p className="text-gray-400 mt-2">Sorry, the challenges for "{selectedCourse}" are not ready yet.</p>
-            <button onClick={() => handleNavigate('courses')} className="mt-6 px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                Back to Courses
+            <button onClick={() => handleNavigate(backView)} className="mt-6 px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                Back to {backView === 'practice' ? 'Practice' : 'Courses'}
             </button>
           </div>
         );
@@ -72,9 +85,9 @@ function App() {
   };
 
   return (
-    <div className="bg-gray-900 text-white min-h-screen">
-      <Header user={user} currentView={currentView} onNavigate={handleNavigate as (view: string) => void} />
-      <main>
+    <div className="bg-gray-900 text-white h-screen flex flex-col">
+      <Header currentView={currentView} onNavigate={handleNavigate as (view: string) => void} />
+      <main className="flex-grow min-h-0">
         {renderView()}
       </main>
     </div>

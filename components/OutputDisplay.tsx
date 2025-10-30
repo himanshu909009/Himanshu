@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useRef } from 'react';
 import type { SimulationOutput, Theme } from '../types';
 
@@ -90,15 +92,15 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({ output, isLoading,
     return (
         <div className={`flex flex-col h-full ${theme.background} border ${theme.border} rounded-md overflow-hidden`}>
             <div className={`flex justify-between items-center p-2 border-b ${theme.border} ${theme.lineNumberBg}`}>
-                <h3 className={`text-sm font-medium ${theme.lineNumber} px-2`}>Output</h3>
+                <h3 className={`text-lg font-medium ${theme.lineNumber} px-2`}>Output</h3>
                  <button
                     onClick={onClear}
-                    className="text-xs text-gray-400 hover:text-white px-3 py-1 border border-gray-600 rounded hover:bg-gray-700 transition"
+                    className="text-sm text-gray-400 hover:text-white px-3 py-1 border border-gray-600 rounded hover:bg-gray-700 transition"
                  >
                     Clear
                  </button>
             </div>
-            <div ref={terminalBodyRef} className={`flex-grow p-4 font-mono text-sm overflow-auto ${theme.text}`} onClick={() => inputRef.current?.focus()}>
+            <div ref={terminalBodyRef} className={`flex-grow p-4 font-mono text-lg overflow-auto ${theme.text}`} onClick={() => inputRef.current?.focus()}>
                 {renderContent()}
                 {showInputPrompt && (
                      <form onSubmit={handleFormSubmit} className="flex items-center mt-2">

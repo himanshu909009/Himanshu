@@ -1,4 +1,8 @@
-import React, { useRef, useLayoutEffect } from 'react';
+
+
+
+
+import React, { useRef, useState } from 'react';
 import type { Theme } from '../types';
 
 interface CodeEditorProps {
@@ -7,26 +11,45 @@ interface CodeEditorProps {
   theme: Theme;
   errorLine: number | null;
   errorColumn: number | null;
+  aiExplanation?: string | null;
 }
 
-export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, theme, errorLine, errorColumn }) => {
+export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, theme, errorLine, errorColumn, aiExplanation }) => {
   const lineNumbers = code.split('\n').map((_, index) => index + 1);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
-
-  useLayoutEffect(() => {
-    if (textareaRef.current && preRef.current) {
-      preRef.current.scrollTop = textareaRef.current.scrollTop;
-      preRef.current.scrollLeft = textareaRef.current.scrollLeft;
-    }
-  });
+  const lineNumbersRef = useRef<HTMLDivElement>(null);
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
 
   const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+    const { scrollTop, scrollLeft } = e.currentTarget;
     if (preRef.current) {
-      preRef.current.scrollTop = e.currentTarget.scrollTop;
-      preRef.current.scrollLeft = e.currentTarget.scrollLeft;
+      preRef.current.scrollTop = scrollTop;
+      preRef.current.scrollLeft = scrollLeft;
+    }
+    if (lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = scrollTop;
     }
   };
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLSpanElement>) => {
+    if (!aiExplanation) return;
+    const spanRect = e.currentTarget.getBoundingClientRect();
+    const container = e.currentTarget.closest('.relative.flex-grow');
+    if (container) {
+      const containerRect = container.getBoundingClientRect();
+      const top = spanRect.bottom - containerRect.top + 5; // Position below with 5px margin
+      const left = spanRect.left - containerRect.left;
+      setTooltipPosition({ top, left });
+      setIsTooltipVisible(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsTooltipVisible(false);
+  };
+
 
   const renderHighlightedCode = () => {
     if (errorLine === null) return <>{code}{' '}</>;
@@ -47,7 +70,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
 
                     // If error is at EOL (e.g., missing ';'), highlight a space there.
                     if (colIndex === line.length) {
-                        return <>{line}<span className="bg-red-500 bg-opacity-40 rounded-sm"> </span></>;
+                        return <>{line}<span onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className="bg-red-500 bg-opacity-40 rounded-sm"> </span></>;
                     }
                     
                     let start = colIndex;
@@ -73,7 +96,11 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
                     return (
                         <>
                             {before}
-                            <span className="bg-red-500 bg-opacity-20 rounded-sm underline decoration-wavy decoration-red-500">
+                            <span 
+                                className="bg-red-500 bg-opacity-20 rounded-sm underline decoration-wavy decoration-red-500"
+                                onMouseEnter={handleMouseEnter}
+                                onMouseLeave={handleMouseLeave}
+                            >
                                 {erroredPart}
                             </span>
                             {after}
@@ -81,7 +108,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
                     );
                 }
                 // Fallback to highlighting the whole line if no column info
-                return <span className="bg-red-500 bg-opacity-30">{line || ' '}</span>;
+                return <span onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className="bg-red-500 bg-opacity-30">{line || ' '}</span>;
             })()}
             {lineIndex < lines.length - 1 ? '\n' : ''}
             {lines.slice(lineIndex + 1).join('\n')}
@@ -89,11 +116,14 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
     );
   };
       
-  const commonEditorClasses = "w-full h-full p-4 font-mono text-sm resize-none focus:outline-none whitespace-pre-wrap break-words overflow-auto";
+  const commonEditorClasses = "w-full h-full p-4 font-mono text-2xl resize-none focus:outline-none whitespace-pre-wrap break-words overflow-auto";
 
   return (
     <div className={`flex-grow flex ${theme.background} ${theme.border} border rounded-md overflow-hidden`}>
-        <div className={`py-4 pl-2 pr-4 text-right ${theme.lineNumber} select-none ${theme.lineNumberBg} ${theme.lineNumberBorder || ''} font-mono text-sm`}>
+        <div
+            ref={lineNumbersRef}
+            className={`py-4 pl-2 pr-4 text-right ${theme.lineNumber} select-none ${theme.lineNumberBg} ${theme.lineNumberBorder || ''} font-mono text-2xl overflow-y-hidden`}
+        >
             {lineNumbers.map(num => (
                 <div 
                     key={num} 
@@ -123,6 +153,18 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
               spellCheck="false"
               aria-label="Code Editor"
             />
+            {isTooltipVisible && aiExplanation && (
+                <div
+                    className="absolute z-20 p-4 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl max-w-lg"
+                    style={{ top: `${tooltipPosition.top}px`, left: `${tooltipPosition.left}px` }}
+                >
+                    <h4 className={`font-bold text-lg mb-2 text-white`}>AI Assistant</h4>
+                    <div 
+                        className={`text-gray-300 text-base leading-relaxed max-w-none whitespace-pre-wrap`}
+                        dangerouslySetInnerHTML={{ __html: aiExplanation.replace(/\`\`\`(\w+)?\n([\s\S]+?)\n\`\`\`/g, '<pre class="bg-gray-800 p-2 my-2 rounded-md font-mono text-sm block whitespace-pre overflow-x-auto"><code>$2</code></pre>') }}
+                    />
+                </div>
+            )}
           </div>
     </div>
   );

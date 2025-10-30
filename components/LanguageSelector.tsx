@@ -18,7 +18,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
       id="language-select"
       value={selectedLanguage}
       onChange={(e) => onLanguageChange(e.target.value as Language)}
-      className="bg-gray-800 border border-gray-700 text-white rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+      className="bg-gray-800 border border-gray-700 text-white rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-base"
       aria-label="Select Language"
     >
       <option value="" disabled>Select Language</option>

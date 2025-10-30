@@ -13,12 +13,12 @@ interface ChallengeListItemProps {
 }
 
 export const ChallengeListItem: React.FC<ChallengeListItemProps> = ({ challenge, onPerform }) => {
-  const { id, title, difficulty, category, maxScore, successRate, description, isSolved } = challenge;
+  const { id, title, difficulty, category, maxScore, successRate, description } = challenge;
   return (
     <div className="bg-gray-800 p-6 rounded-lg flex justify-between items-center hover:bg-gray-700 transition">
       <div>
-        <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
-        <div className="flex items-center text-sm text-gray-400 mb-3 flex-wrap">
+        <h3 className="text-2xl font-bold text-white mb-2">{title}</h3>
+        <div className="flex items-center text-base text-gray-400 mb-3 flex-wrap">
           <span className="text-green-400 font-medium">{difficulty}</span>
           <span className="mx-2 text-gray-600">,</span>
           <span>{category}</span>
@@ -27,7 +27,7 @@ export const ChallengeListItem: React.FC<ChallengeListItemProps> = ({ challenge,
           <span className="mx-2 text-gray-600">,</span>
           <span>Success Rate: {successRate}</span>
         </div>
-        <p className="text-sm text-gray-400">{description}</p>
+        <p className="text-base text-gray-400">{description}</p>
       </div>
       <div className="flex items-center space-x-6 flex-shrink-0 ml-6">
         <button aria-label="Add to favorites" className="hover:text-yellow-400 transition">
@@ -35,11 +35,7 @@ export const ChallengeListItem: React.FC<ChallengeListItemProps> = ({ challenge,
         </button>
         <button 
           onClick={() => onPerform(id)}
-          className={`px-6 py-2 rounded-md font-semibold text-sm transition ${
-            isSolved 
-              ? 'bg-green-500 text-white hover:bg-green-600' 
-              : 'bg-gray-900 bg-opacity-50 border border-gray-600 text-gray-200 hover:bg-gray-700'
-          }`}
+          className="px-6 py-2 rounded-md font-semibold text-base transition bg-green-500 text-white hover:bg-green-600"
         >
           Perform
         </button>

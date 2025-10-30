@@ -1,4 +1,7 @@
 
+
+
+
 import React from 'react';
 import type { Theme } from '../types';
 
@@ -6,6 +9,7 @@ interface AiAgentProps {
     explanation: string | null;
     isLoading: boolean;
     theme: Theme;
+    onClose: () => void;
 }
 
 const AgentAvatar: React.FC = () => (
@@ -27,27 +31,34 @@ const LoadingDots: React.FC = () => (
     </div>
 );
 
-export const AiAgent: React.FC<AiAgentProps> = ({ explanation, isLoading, theme }) => {
-    if (!isLoading && !explanation) {
-        return null;
-    }
-
+export const AiAgent: React.FC<AiAgentProps> = ({ explanation, isLoading, theme, onClose }) => {
     return (
-        <div className={`flex items-start p-4 ${theme.background} border ${theme.border} rounded-md`}>
-            <AgentAvatar />
-            <div className="flex-grow">
-                <h4 className={`font-bold text-sm mb-2 ${theme.text}`}>AI Assistant</h4>
-                <div className={`text-sm ${theme.text} prose prose-sm prose-invert max-w-none`}>
-                    {isLoading && (
-                        <div className="flex items-center text-gray-400">
-                            <span className="mr-2">Thinking...</span>
-                            <LoadingDots />
-                        </div>
-                    )}
-                    {explanation && (
-                         <div className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: explanation.replace(/\`\`\`(\w+)?\n([\s\S]+?)\n\`\`\`/g, '<pre class="bg-gray-800 p-2 rounded-md"><code>$2</code></pre>') }} />
-                    )}
+        <div className={`flex flex-col p-4 ${theme.background} border ${theme.border} rounded-md shadow-2xl max-h-[90vh]`}>
+            <div className="flex items-center justify-between flex-shrink-0">
+                <div className="flex items-center">
+                    <AgentAvatar />
+                    <h4 className={`font-bold text-lg ${theme.text}`}>AI Assistant</h4>
                 </div>
+                <button 
+                    onClick={onClose} 
+                    className="text-gray-400 hover:text-white transition"
+                    aria-label="Close AI Assistant"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div className={`${theme.text} prose prose-lg prose-invert max-w-none mt-4 pt-4 border-t ${theme.border} flex-grow overflow-y-auto`}>
+                {isLoading && (
+                    <div className="flex items-center text-gray-400">
+                        <span className="mr-2">Thinking...</span>
+                        <LoadingDots />
+                    </div>
+                )}
+                {explanation && (
+                     <div className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: explanation.replace(/\`\`\`(\w+)?\n([\s\S]+?)\n\`\`\`/g, '<pre class="bg-gray-800 p-2 rounded-md"><code>$2</code></pre>') }} />
+                )}
             </div>
         </div>
     );
