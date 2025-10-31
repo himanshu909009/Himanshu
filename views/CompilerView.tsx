@@ -1,9 +1,4 @@
 
-
-
-
-
-
 import React, { useState, useCallback } from 'react';
 import { CodeEditor } from '../components/CodeEditor';
 import { OutputDisplay } from '../components/OutputDisplay';
@@ -13,6 +8,7 @@ import { LANGUAGES, DEFAULT_CODE } from '../constants';
 import { runCodeSimulation, getAiErrorExplanation, getAiCodeFeedback } from '../services/geminiService';
 import type { Language, SimulationOutput, ThemeName, VirtualFile } from '../types';
 import { THEMES } from '../themes';
+import { InputSection } from '../components/InputSection';
 
 const getFileName = (language: Language) => {
     switch (language) {
@@ -86,7 +82,6 @@ export function CompilerView() {
         setOutput(null);
         setErrorLine(null);
         setErrorColumn(null);
-        setInput("");
         setAiExplanation(null); 
 
         const file: VirtualFile = {
@@ -96,7 +91,7 @@ export function CompilerView() {
         };
 
         try {
-            const result = await runCodeSimulation(language, [file], file.id, "");
+            const result = await runCodeSimulation(language, [file], file.id, input);
             setOutput(result);
             setIsAiLoading(true);
             if (result.compilation.status === 'error') {
@@ -115,7 +110,7 @@ export function CompilerView() {
             setIsLoading(false);
             setIsAiLoading(false);
         }
-    }, [language, code]);
+    }, [language, code, input]);
     
     const handleTerminalSubmit = useCallback(async (newLine: string) => {
         if (isLoading) return;
@@ -160,7 +155,7 @@ export function CompilerView() {
     return (
         <div className="p-4 sm:p-6 lg:p-8">
             <div className="max-w-screen-2xl mx-auto">
-                <div className="flex flex-col md:flex-row gap-4 h-[88vh]">
+                <div className="flex flex-col md:flex-row gap-4 h-[88vh] relative">
                     
                     <div className="md:w-3/5 lg:w-2/3 flex flex-col h-full">
                         <div className={`flex justify-between items-center mb-2 px-2 py-1 ${currentThemeObject.lineNumberBg} rounded-t-md border-b ${currentThemeObject.border}`}>
@@ -202,24 +197,37 @@ export function CompilerView() {
                         />
                     </div>
 
-                    <div className="md:w-2/5 lg:w-1/3 flex flex-col h-full gap-4">
-                       <OutputDisplay 
-                            output={output} 
-                            isLoading={isLoading} 
-                            error={error}
-                            theme={THEMES[theme]}
-                            onInputSubmit={handleTerminalSubmit}
-                            onClear={handleClearOutput}
-                        />
-                        {(isAiLoading || aiExplanation) && (
+                    <div className="md:w-2/5 lg:w-1/3 h-full grid grid-rows-3 gap-4">
+                       <div className="row-span-1 min-h-0">
+                           <InputSection
+                                value={input}
+                                onChange={setInput}
+                                isLoading={isLoading}
+                           />
+                       </div>
+                       <div className="row-span-2 min-h-0">
+                           <OutputDisplay 
+                                output={output} 
+                                isLoading={isLoading} 
+                                error={error}
+                                onInputSubmit={handleTerminalSubmit}
+                                onClear={handleClearOutput}
+                                testResults={null}
+                                isTesting={false}
+                            />
+                       </div>
+                    </div>
+
+                    {(isAiLoading || aiExplanation) && (
+                        <div className="absolute top-4 right-4 z-20 w-full max-w-lg">
                             <AiAgent
                                 explanation={aiExplanation}
                                 isLoading={isAiLoading}
                                 theme={THEMES[theme]}
                                 onClose={() => setAiExplanation(null)}
                             />
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

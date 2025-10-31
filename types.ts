@@ -145,6 +145,20 @@ export interface CourseDetails {
     modules: CourseModule[];
 }
 
+export interface TestCase {
+  id: string;
+  input: string;
+  expectedOutput: string;
+  isLocked?: boolean;
+}
+
+export interface TestResult {
+  testCase: TestCase;
+  status: 'pass' | 'fail' | 'error';
+  actualOutput: string;
+  errorMessage?: string;
+}
+
 export interface Challenge {
   id: number;
   title: string;
@@ -158,4 +172,5 @@ export interface Challenge {
   outputFormat?: string;
   sampleOutput?: string;
   boilerplateCode?: string;
+  testCases?: TestCase[];
 }

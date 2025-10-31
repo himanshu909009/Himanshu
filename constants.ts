@@ -174,6 +174,9 @@ export const CPP_CHALLENGES: Challenge[] = [
         outputFormat: 'Print `Hello, World!` to stdout.',
         sampleOutput: 'Hello, World!',
         boilerplateCode: '#include <iostream>\n#include <cstdio>\n\nusing namespace std;\n\nint main() {\n    printf("Hello, World!");\n    return 0;\n}',
+        testCases: [
+            { id: '1', input: '', expectedOutput: 'Hello, World!', isLocked: true },
+        ],
     },
     { id: 2, title: 'Input and Output', difficulty: 'Easy', category: 'C++ (Basic)', maxScore: 5, successRate: '93.90%', description: 'Practice reading input and printing output.', isSolved: false },
     { id: 3, title: 'Basic Data Types', difficulty: 'Easy', category: 'C++ (Basic)', maxScore: 10, successRate: '80.95%', description: 'Learn about C++ data types.', isSolved: false },
