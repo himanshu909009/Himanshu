@@ -1,5 +1,6 @@
 
 
+
 import { GoogleGenAI, Type } from "@google/genai";
 // Fix: Use 'import type' for type-only imports and combine them.
 import type { Language, SimulationOutput, VirtualFile, TestCase } from '../types';
@@ -179,42 +180,6 @@ export async function getAiErrorExplanation(language: Language, code: string, er
     } catch (error) {
         console.error("Error getting AI explanation:", error);
         return "Sorry, I couldn't analyze the error. Please try again.";
-    }
-}
-
-export async function getAiCodeFeedback(language: Language, code: string): Promise<string> {
-    const prompt = `
-        You are a friendly and helpful AI coding tutor. A programmer has written the following code, which has compiled and run successfully. 
-        Your task is to review the code and provide helpful feedback.
-
-        **Language:** ${language}
-
-        **The user's code:**
-        \`\`\`${language}
-        ${code}
-        \`\`\`
-
-        **Instructions:**
-        1.  Start by congratulating the user on writing code that works.
-        2.  Briefly explain what the code does to confirm your understanding.
-        3.  Provide one or two suggestions for improvement, if any. This could be about:
-            *   **Best Practices:** Is there a more standard or conventional way to write this?
-            *   **Efficiency:** Could it be made faster or use less memory?
-            *   **Readability:** Can the code be made clearer or easier to understand?
-            *   **Alternative Approaches:** Mention a different way to solve the problem, if interesting.
-        4.  If the code is already excellent (e.g., a simple "Hello, World!" program), just praise it and keep the feedback positive and brief.
-        5.  Keep your tone encouraging and constructive.
-    `;
-
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-        });
-        return response.text;
-    } catch (error) {
-        console.error("Error getting AI feedback:", error);
-        return "Sorry, I couldn't analyze your code. Please try again.";
     }
 }
 

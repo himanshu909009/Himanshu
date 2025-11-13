@@ -1,12 +1,14 @@
 
 
+
+
 import React, { useState, useCallback, useRef } from 'react';
 import { ProblemDescription } from '../components/ProblemDescription';
 import { CodeEditor } from '../components/CodeEditor';
 import { OutputDisplay } from '../components/OutputDisplay';
 import { THEMES } from '../themes';
 import type { Challenge, SimulationOutput, VirtualFile, Language, TestResult } from '../types';
-import { runCodeSimulation, getAiFailureAnalysis, getAiCodeFeedback, getAiErrorExplanation } from '../services/geminiService';
+import { runCodeSimulation, getAiFailureAnalysis, getAiErrorExplanation } from '../services/geminiService';
 import { AiAgent } from '../components/AiAgent';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { LANGUAGES, DEFAULT_CODE } from '../constants';
@@ -205,16 +207,6 @@ export function ChallengeEditorView({ challenge, onBack }: ChallengeEditorViewPr
             } catch (e) {
                 console.error("Failed to get AI analysis", e);
                 setAiExplanation("Sorry, I couldn't analyze this failure.");
-            } finally {
-                setIsAiLoading(false);
-            }
-        } else {
-            setIsAiLoading(true);
-            try {
-                const feedback = await getAiCodeFeedback(language, code);
-                setAiExplanation(feedback);
-            } catch(e) {
-                console.error("Failed to get AI feedback", e);
             } finally {
                 setIsAiLoading(false);
             }

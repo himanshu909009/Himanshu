@@ -75,10 +75,10 @@ export const CODE_SNIPPETS: Record<Language, Snippet[]> = {
 
 export const INITIAL_USER: User = {
   name: 'Himanshu',
-  username: '@alexdoe',
-  avatarUrl: 'https://i.pravatar.cc/150?u=alexdoe',
-  email: 'alex.doe@example.com',
-  college: 'State University',
+  username: 'himanshu',
+  avatarUrl: 'https://i.pravatar.cc/150?u=himanshu_profile',
+  email: 'himanshun102@gmail.com',
+  college: 'SAGE University',
   course: 'Computer Science',
   stats: [
     { label: 'Rank', value: 1234 },
