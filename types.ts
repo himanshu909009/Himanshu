@@ -50,6 +50,7 @@ export interface User {
   college?: string;
   course?: string;
   stats: { label: string; value: number | string }[];
+  submissions: RecentActivityItem[];
 }
 
 export type ThemeName = 'dark' | 'light' | 'solarized' | 'monokai';
@@ -111,6 +112,7 @@ export interface ContestProblem {
 
 export interface RecentActivityItem {
   id: number;
+  challengeId: number;
   title: string;
   status: 'Accepted' | 'Wrong Answer' | 'Time Limit Exceeded';
   timestamp: string;

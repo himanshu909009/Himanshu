@@ -291,6 +291,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
         const currentIndent = indentMatch ? indentMatch[0] : '';
         let newIndent = currentIndent;
         const trimmedLineBeforeCursor = currentLineText.trimEnd();
+        
         let shouldIndent = false;
 
         if (language === 'python') {
@@ -305,13 +306,29 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
                 }
             }
         }
+        
+        // Handle hanging indents from open parens/brackets
+        const openParenCount = (trimmedLineBeforeCursor.match(/\(/g) || []).length;
+        const closeParenCount = (trimmedLineBeforeCursor.match(/\)/g) || []).length;
+        if (openParenCount > closeParenCount) {
+             shouldIndent = true;
+        }
+        const openBracketCount = (trimmedLineBeforeCursor.match(/\[/g) || []).length;
+        const closeBracketCount = (trimmedLineBeforeCursor.match(/\]/g) || []).length;
+         if (openBracketCount > closeBracketCount) {
+             shouldIndent = true;
+        }
+
+
         if (shouldIndent) newIndent += '    ';
 
         const charBeforeCursor = value[selectionStart - 1];
         const charAfterCursor = value[selectionStart];
         let textToInsert = '\n' + newIndent;
 
-        if (BRACKET_PAIRS[charBeforeCursor] === charAfterCursor && charBeforeCursor !== '"' && charBeforeCursor !== "'") {
+        if ((charBeforeCursor === '{' && charAfterCursor === '}') ||
+            (charBeforeCursor === '[' && charAfterCursor === ']') ||
+            (charBeforeCursor === '(' && charAfterCursor === ')')) {
             textToInsert += '\n' + currentIndent;
         }
         
@@ -341,11 +358,32 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
     }
 
     const closingChars = ['}', ')', ']', '"', "'", '`'];
-    if (closingChars.includes(e.key) && selectionStart === selectionEnd && value[selectionStart] === e.key) {
-        e.preventDefault();
-        textarea.selectionStart = selectionStart + 1;
-        textarea.selectionEnd = selectionStart + 1;
-        return;
+    if (closingChars.includes(e.key) && selectionStart === selectionEnd) {
+        if (value[selectionStart] === e.key) {
+            e.preventDefault();
+            textarea.selectionStart = selectionStart + 1;
+            textarea.selectionEnd = selectionStart + 1;
+            return;
+        }
+        
+        if (e.key === '}' || e.key === ')' || e.key === ']') {
+            const lineStartPos = value.lastIndexOf('\n', selectionStart - 1) + 1;
+            const currentLineText = value.substring(lineStartPos, selectionStart);
+            
+            if (currentLineText.trim() === '' && currentLineText.length >= 4) {
+                e.preventDefault();
+                const newIndent = currentLineText.substring(0, currentLineText.length - 4);
+                const newText = value.substring(0, lineStartPos) + newIndent + e.key + value.substring(selectionEnd);
+                handleCodeChange(newText);
+
+                setTimeout(() => {
+                    const cursorPosition = lineStartPos + newIndent.length + 1;
+                    textarea.selectionStart = cursorPosition;
+                    textarea.selectionEnd = cursorPosition;
+                }, 0);
+                return;
+            }
+        }
     }
     
     if (e.key === 'Backspace' && selectionStart === selectionEnd) {

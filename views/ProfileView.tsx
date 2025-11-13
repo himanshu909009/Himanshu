@@ -1,5 +1,5 @@
 // Fix: Implemented the ProfileView component.
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Heatmap } from '../components/Heatmap';
 import { RecentActivity } from '../components/RecentActivity';
 import type { User } from '../types';
@@ -7,6 +7,7 @@ import type { User } from '../types';
 interface ProfileViewProps {
   user: User;
   onUserUpdate: (user: User) => void;
+  onNavigate: (view: string, context: number) => void;
 }
 
 const DetailItem: React.FC<{ icon: React.ReactNode; text?: string }> = ({ icon, text }) => (
@@ -31,7 +32,7 @@ const DetailInputItem: React.FC<{ icon: React.ReactNode; value?: string; name: s
 );
 
 
-export function ProfileView({ user, onUserUpdate }: ProfileViewProps) {
+export function ProfileView({ user, onUserUpdate, onNavigate }: ProfileViewProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState(user);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -40,6 +41,19 @@ export function ProfileView({ user, onUserUpdate }: ProfileViewProps) {
     // Reset form when user data changes from props
     setEditedUser(user);
   }, [user]);
+
+  const displayStats = useMemo(() => {
+    const solvedProblemsCount = new Set(
+      user.submissions.filter(s => s.status === 'Accepted').map(s => s.challengeId)
+    ).size;
+
+    return user.stats.map(stat => {
+      if (stat.label === 'Problems') {
+        return { ...stat, value: solvedProblemsCount };
+      }
+      return stat;
+    });
+  }, [user.stats, user.submissions]);
 
   const handleEditToggle = () => {
     if (isEditing) {
@@ -66,6 +80,10 @@ export function ProfileView({ user, onUserUpdate }: ProfileViewProps) {
   };
   
   const triggerFileSelect = () => fileInputRef.current?.click();
+  
+  const handleActivitySelect = (challengeId: number) => {
+    onNavigate('challengeEditor', challengeId);
+  };
 
   const MailIcon = <svg xmlns="http://www.w3.org/2000/svg" className="h-full w-full text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" /><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" /></svg>;
   const CollegeIcon = <svg xmlns="http://www.w3.org/2000/svg" className="h-full w-full text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>;
@@ -112,7 +130,7 @@ export function ProfileView({ user, onUserUpdate }: ProfileViewProps) {
                 )}
                 
                 <div className="flex justify-around text-center my-6">
-                    {user.stats.map(stat => (
+                    {displayStats.map(stat => (
                         <div key={stat.label}>
                             <p className="text-2xl font-bold text-white">{stat.value}</p>
                             <p className="text-sm text-gray-400">{stat.label}</p>
@@ -148,8 +166,8 @@ export function ProfileView({ user, onUserUpdate }: ProfileViewProps) {
           </div>
 
           <div className="lg:w-3/4 flex flex-col gap-8">
-            <Heatmap />
-            <RecentActivity />
+            <Heatmap submissions={user.submissions} />
+            <RecentActivity activities={user.submissions} onActivitySelect={handleActivitySelect} />
           </div>
         </div>
       </div>

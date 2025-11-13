@@ -1,34 +1,9 @@
 import React from 'react';
+import type { RecentActivityItem } from '../types';
 
-// Generates specific data for the last year as per user request
-const generateHeatmapData = () => {
-  const data = new Map<string, number>();
-  const today = new Date();
-  const currentYear = today.getFullYear();
-  
-  // As requested, only show activity on 5 specific days in October
-  const activeDaysInOctober = [3, 6, 13, 21, 28];
-
-  for (let i = 0; i < 365; i++) {
-    const date = new Date();
-    date.setDate(today.getDate() - i);
-    const dateString = date.toISOString().split('T')[0];
-
-    let activity = 0; // Default to no activity
-
-    // Check if the current date is one of the active days in October of the current year
-    if (date.getMonth() === 9 && date.getFullYear() === currentYear && activeDaysInOctober.includes(date.getDate())) {
-        // Assign some random activity to make the squares green
-        activity = Math.floor(Math.random() * 10) + 5; 
-    }
-    
-    data.set(dateString, activity);
-  }
-  return data;
-};
-
-
-const contributionData = generateHeatmapData();
+interface HeatmapProps {
+    submissions: RecentActivityItem[];
+}
 
 const getColor = (count: number) => {
   if (count === 0) return 'bg-gray-700';
@@ -41,7 +16,25 @@ const getColor = (count: number) => {
 const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-export const Heatmap: React.FC = () => {
+export const Heatmap: React.FC<HeatmapProps> = ({ submissions }) => {
+    const contributionData = React.useMemo(() => {
+        const data = new Map<string, number>();
+        if (!submissions) return data;
+
+        submissions.forEach(sub => {
+            if (sub.status === 'Accepted') {
+                try {
+                    const dateString = new Date(sub.timestamp).toISOString().split('T')[0];
+                    const currentCount = data.get(dateString) || 0;
+                    data.set(dateString, currentCount + 1);
+                } catch (e) {
+                    console.error("Invalid timestamp format:", sub.timestamp);
+                }
+            }
+        });
+        return data;
+    }, [submissions]);
+
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 364);
 
@@ -71,7 +64,7 @@ export const Heatmap: React.FC = () => {
 
         const weekIndex = Math.floor((i + firstDayOfWeek) / 7);
 
-        if (currentDate.getDate() === 1 && currentDate.getMonth() !== lastMonth) {
+        if (currentDate.getMonth() !== lastMonth && currentDate.getDate() < 8) { // Only add label near start of month
             months.push(
                 <div key={currentDate.getMonth()} className="text-xs text-gray-400 absolute" style={{ left: `${weekIndex * 18}px` }}>
                    {monthLabels[currentDate.getMonth()]}
@@ -84,7 +77,7 @@ export const Heatmap: React.FC = () => {
             <div
                 key={dateString}
                 className={`w-4 h-4 rounded-sm ${getColor(count)}`}
-                title={`${count} submissions on ${dateString}`}
+                title={`${count} successful submissions on ${dateString}`}
             />
         );
         currentDate.setDate(currentDate.getDate() + 1);
@@ -98,7 +91,7 @@ export const Heatmap: React.FC = () => {
                     {weekDayCells}
                 </div>
                 <div className="flex-grow overflow-x-auto">
-                     <div className="relative h-5">
+                     <div className="relative h-5 mb-1">
                         {months}
                     </div>
                     <div className="grid grid-flow-col grid-rows-7 gap-1">

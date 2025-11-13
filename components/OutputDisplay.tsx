@@ -15,7 +15,20 @@ const OutputContent: React.FC<{ output: SimulationOutput }> = ({ output }) => {
     const { compilation, output: programOutput } = output;
 
     if (compilation.status === 'error') {
-        return <pre className="text-red-400 whitespace-pre-wrap break-words">{compilation.message}</pre>;
+        const { message, line, column } = compilation;
+        return (
+            <div>
+                <div className="bg-red-900/30 border border-red-700 p-3 rounded-md font-mono">
+                    <p className="font-sans font-bold text-red-400 mb-2 text-base">Compilation Error</p>
+                    {line && (
+                        <p className="text-sm text-yellow-400 mb-2">
+                            Location: Line {line}{column ? `, Column ${column}` : ''}
+                        </p>
+                    )}
+                    <pre className="text-red-300 whitespace-pre-wrap break-words text-sm">{message}</pre>
+                </div>
+            </div>
+        );
     }
 
     if (programOutput.transcript && programOutput.transcript.length > 0) {

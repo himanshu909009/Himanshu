@@ -23,7 +23,12 @@ function App() {
     try {
       const savedUserJSON = localStorage.getItem(USER_STORAGE_KEY);
       if (savedUserJSON) {
-        return JSON.parse(savedUserJSON);
+        // Simple migration: if old user object doesn't have submissions, add it.
+        const parsedUser = JSON.parse(savedUserJSON);
+        if (!parsedUser.submissions) {
+          parsedUser.submissions = INITIAL_USER.submissions;
+        }
+        return parsedUser;
       }
     } catch (error) {
       console.error('Error reading user from localStorage:', error);
@@ -49,8 +54,14 @@ function App() {
     if (view === 'challengeList' && typeof context === 'string') {
       setSelectedCourse(context);
     } else if (view === 'challengeEditor' && typeof context === 'number') {
+      // When navigating to the editor, find the associated course title to preserve breadcrumbs
+      const challenge = CPP_CHALLENGES.find(c => c.id === context);
+      if(challenge) {
+          const course = challenge.category.includes('C++') ? 'C++' : 'Algorithms';
+          setSelectedCourse(course);
+      }
       setSelectedChallengeId(context);
-    } else {
+    } else if (view !== 'challengeEditor') { // Prevent clearing context when navigating away from editor
       setSelectedCourse(null);
       setSelectedChallengeId(null);
     }
@@ -65,7 +76,7 @@ function App() {
       case 'compiler':
         return <CompilerView />;
       case 'profile':
-        return <ProfileView user={user} onUserUpdate={handleUserUpdate} />;
+        return <ProfileView user={user} onUserUpdate={handleUserUpdate} onNavigate={(view, id) => handleNavigate(view as View, id)} />;
       case 'challengeList':
         const allPracticeProblems = [...PRACTICE_PROBLEMS, ...SUBJECT_PROBLEMS];
         const cameFromPractice = allPracticeProblems.some(p => p.name === selectedCourse);

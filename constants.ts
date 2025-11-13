@@ -162,6 +162,13 @@ export const INITIAL_USER: User = {
     { label: 'Problems', value: 150 },
     { label: 'Points', value: 3200 },
   ],
+  submissions: [
+    { id: 1, challengeId: 11, title: 'Largest of Three Numbers', status: 'Accepted', timestamp: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString() },
+    { id: 2, challengeId: 21, title: 'Matrix Multiplication', status: 'Wrong Answer', timestamp: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString() },
+    { id: 3, challengeId: 8, title: 'Factorial of a Number', status: 'Accepted', timestamp: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString() },
+    { id: 4, challengeId: 17, title: 'GCD with Recursion', status: 'Time Limit Exceeded', timestamp: new Date(new Date().setDate(new Date().getDate() - 5)).toISOString() },
+    { id: 5, challengeId: 1, title: 'Print "Hello, World!"', status: 'Accepted', timestamp: new Date(new Date().setDate(new Date().getDate() - 10)).toISOString() },
+  ]
 };
 
 export const COURSES: Course[] = [
@@ -204,12 +211,6 @@ export const CONTEST_PROBLEMS: ContestProblem[] = [
   { id: 'B', title: 'Max Subarray Sum', difficulty: 'Medium', points: 500 },
   { id: 'C', title: 'Binary Tree Paths', difficulty: 'Medium', points: 600 },
   { id: 'D', title: 'Word Ladder', difficulty: 'Hard', points: 1000 },
-];
-
-export const RECENT_ACTIVITIES: RecentActivityItem[] = [
-  { id: 1, title: 'Two Sum Variant', status: 'Accepted', timestamp: '5 minutes ago' },
-  { id: 2, title: 'Max Subarray Sum', status: 'Wrong Answer', timestamp: '1 hour ago' },
-  { id: 3, title: 'Binary Tree Paths', status: 'Time Limit Exceeded', timestamp: '3 hours ago' },
 ];
 
 export const COURSE_DETAILS: Record<string, CourseDetails> = {

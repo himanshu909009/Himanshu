@@ -106,6 +106,13 @@ export function ChallengeEditorView({ challenge, onBack }: ChallengeEditorViewPr
             if (result.compilation.status === 'error') {
                 setErrorLine(result.compilation.line ?? null);
                 setErrorColumn(result.compilation.column ?? null);
+                setIsAiLoading(true);
+                try {
+                    const explanation = await getAiErrorExplanation(language, code, result.compilation.message);
+                    setAiExplanation(explanation);
+                } finally {
+                    setIsAiLoading(false);
+                }
             }
         } catch (e) {
             const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
