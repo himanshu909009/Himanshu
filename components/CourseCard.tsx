@@ -9,9 +9,18 @@ interface CourseCardProps {
 }
 
 export const CourseCard: React.FC<CourseCardProps> = ({ course, onSelect, user }) => {
-  // This is a simplification for the demo, assuming all challenges belong to this course.
-  // In a real app, you would filter challenges based on the course ID.
-  const courseChallengeIds = new Set(CPP_CHALLENGES.map(c => c.id));
+  // In a real app, this logic would be more robust, likely using course IDs.
+  // For this demo, we map the course title to the relevant challenge list.
+  const getCourseChallenges = (courseTitle: string) => {
+    if (courseTitle === 'Object Oriented Programming in C++') {
+      return CPP_CHALLENGES;
+    }
+    // Return an empty array for other courses since we don't have their challenge data.
+    return [];
+  };
+
+  const courseChallenges = getCourseChallenges(course.title);
+  const courseChallengeIds = new Set(courseChallenges.map(c => c.id));
   
   const solvedChallengeIds = new Set(
     user.submissions
