@@ -1,7 +1,8 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 // Fix: Add Language to imports
 import type { Language, Theme, ThemeName } from '../types';
-import { LANGUAGE_KEYWORDS } from '../constants';
+// Fix: Import all suggestion sources
+import { LANGUAGE_KEYWORDS, LANGUAGE_FUNCTIONS, CODE_SNIPPETS } from '../constants';
 
 interface CodeEditorProps {
   code: string;
@@ -30,12 +31,20 @@ const getCurrentWordInfo = (text: string, cursorPosition: number) => {
     if (startIndex > 0 && text[startIndex - 1] === '#') {
         startIndex--;
     }
-    while (startIndex > 0 && /[\w#]/.test(text[startIndex - 1])) {
+    while (startIndex > 0 && /[\w#.:]/.test(text[startIndex - 1])) {
         startIndex--;
     }
     const word = text.substring(startIndex, cursorPosition);
     return { word, start: startIndex };
 };
+
+// Fix: Add a structured type for suggestions to handle different kinds of completions.
+interface Suggestion {
+  label: string;
+  type: 'keyword' | 'function' | 'snippet';
+  insertText: string;
+  description?: string;
+}
 
 // Fix: Destructure language from props
 export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, theme, language, errorLine, errorColumn, aiExplanation, snippetToInsert }) => {
@@ -52,7 +61,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
   const [padding, setPadding] = useState({ top: 16, left: 16 });
 
   // Autosuggestion state
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isSuggestionVisible, setIsSuggestionVisible] = useState(false);
   const [suggestionPosition, setSuggestionPosition] = useState({ top: 0, left: 0 });
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
@@ -74,10 +83,31 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
     const { word, start } = getCurrentWordInfo(value, selectionStart);
 
     if (word.length > 0) {
-        const allKeywords = LANGUAGE_KEYWORDS[language] || [];
-        const filteredSuggestions = allKeywords.filter(kw => kw.startsWith(word) && kw !== word);
+        // Fix: Gather suggestions from multiple sources (keywords, functions, snippets).
+        const keywordSuggestions: Suggestion[] = (LANGUAGE_KEYWORDS[language] || [])
+            .filter(kw => kw.startsWith(word) && kw !== word)
+            .map(kw => ({ label: kw, type: 'keyword', insertText: kw }));
 
-        if (filteredSuggestions.length > 0) {
+        const functionSuggestions: Suggestion[] = (LANGUAGE_FUNCTIONS[language] || [])
+            .filter(fn => fn.startsWith(word) && fn !== word)
+            .map(fn => ({ label: fn, type: 'function', insertText: fn }));
+        
+        const snippetSuggestions: Suggestion[] = (CODE_SNIPPETS[language] || [])
+            .filter(snip => snip.title.toLowerCase().startsWith(word.toLowerCase()))
+            .map(snip => ({ 
+                label: snip.title, 
+                type: 'snippet', 
+                insertText: snip.code,
+                description: snip.description 
+            }));
+        
+        const allSuggestions = [...snippetSuggestions, ...functionSuggestions, ...keywordSuggestions];
+        const uniqueSuggestions = allSuggestions.filter((suggestion, index, self) => 
+            index === self.findIndex((s) => s.label === suggestion.label)
+        );
+
+
+        if (uniqueSuggestions.length > 0) {
             const textUpToWordStart = value.substring(0, start);
             const lines = textUpToWordStart.split('\n');
             const lineNum = lines.length;
@@ -87,7 +117,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
             const left = padding.left + colNum * charWidth - textarea.scrollLeft;
             
             setSuggestionPosition({ top, left });
-            setSuggestions(filteredSuggestions);
+            setSuggestions(uniqueSuggestions);
             setIsSuggestionVisible(true);
             setActiveSuggestionIndex(0);
             setCurrentWord({ word, start });
@@ -99,21 +129,29 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
     }
   }, [language, charWidth, lineHeight, padding.top, padding.left]);
 
-  const handleSuggestionSelect = (suggestion: string) => {
+  const handleSuggestionSelect = (suggestion: Suggestion) => {
     if (!currentWord || !textareaRef.current) return;
     
     const { start, word } = currentWord;
     const textarea = textareaRef.current;
     const value = textarea.value;
-
     const endOfWord = start + word.length;
     
-    const newText = value.substring(0, start) + suggestion + ' ' + value.substring(endOfWord);
+    // Fix: Handle insertion differently based on suggestion type.
+    let textToInsert = suggestion.insertText;
+    let cursorOffset = suggestion.insertText.length;
+
+    if (suggestion.type !== 'snippet') {
+        textToInsert += ' ';
+        cursorOffset += 1;
+    }
+    
+    const newText = value.substring(0, start) + textToInsert + value.substring(endOfWord);
     onCodeChange(newText);
     
     setTimeout(() => {
         if (textareaRef.current) {
-            const newCursorPosition = start + suggestion.length + 1;
+            const newCursorPosition = start + cursorOffset;
             textareaRef.current.focus();
             textareaRef.current.selectionStart = newCursorPosition;
             textareaRef.current.selectionEnd = newCursorPosition;
@@ -225,18 +263,139 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
   };
   
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const BRACKET_PAIRS: Record<string, string> = { '(': ')', '[': ']', '{': '}', '"': '"', "'": "'", '`': '`' };
+
+    // --- Part 1: Suggestion Navigation (has highest priority) ---
     if (isSuggestionVisible && suggestions.length > 0) {
         if (e.key === 'ArrowDown') {
             e.preventDefault();
             setActiveSuggestionIndex(prev => (prev + 1) % suggestions.length);
-        } else if (e.key === 'ArrowUp') {
+            return;
+        }
+        if (e.key === 'ArrowUp') {
             e.preventDefault();
             setActiveSuggestionIndex(prev => (prev - 1 + suggestions.length) % suggestions.length);
-        } else if (e.key === 'Enter' || e.key === 'Tab') {
+            return;
+        }
+        if (e.key === 'Enter' || e.key === 'Tab') {
             e.preventDefault();
             handleSuggestionSelect(suggestions[activeSuggestionIndex]);
-        } else if (e.key === 'Escape') {
+            return;
+        }
+        if (e.key === 'Escape') {
+            e.preventDefault();
             setIsSuggestionVisible(false);
+            return;
+        }
+    }
+
+    // --- Part 2: Auto-editing Features ---
+    const textarea = e.currentTarget;
+    const { selectionStart, selectionEnd, value } = textarea;
+
+    // --- Auto-indentation on Enter ---
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        
+        const lineStartPos = value.lastIndexOf('\n', selectionStart - 1) + 1;
+        const currentLineText = value.substring(lineStartPos, selectionStart);
+        const indentMatch = currentLineText.match(/^\s*/);
+        const currentIndent = indentMatch ? indentMatch[0] : '';
+        
+        let newIndent = currentIndent;
+        
+        const trimmedLineBeforeCursor = currentLineText.trimEnd();
+        let shouldIndent = false;
+
+        if (language === 'python') {
+            // In Python, any line ending with a colon starts an indented block.
+            if (/:$/.test(trimmedLineBeforeCursor)) {
+                shouldIndent = true;
+            }
+        } else { // C, C++, Java, JavaScript
+            // Indent if the line ends with an opening brace.
+            if (/{$/.test(trimmedLineBeforeCursor)) {
+                shouldIndent = true;
+            } else {
+                // Also indent for control structures that don't have a brace yet on the same line.
+                // This handles cases like `if (condition)` followed by Enter.
+                // We avoid indenting if the line already ends in a semicolon.
+                const controlStructureRegex = /^\s*((if|for|while)\s*\(.*\)|do|else(\s+if\s*\(.*\))?)\s*$/;
+                if (controlStructureRegex.test(trimmedLineBeforeCursor) && !trimmedLineBeforeCursor.endsWith(';')) {
+                    shouldIndent = true;
+                }
+            }
+        }
+        
+        if (shouldIndent) {
+            newIndent += '    ';
+        }
+
+        const charBeforeCursor = value[selectionStart - 1];
+        const charAfterCursor = value[selectionStart];
+        let textToInsert = '\n' + newIndent;
+
+        if (BRACKET_PAIRS[charBeforeCursor] === charAfterCursor && charBeforeCursor !== '"' && charBeforeCursor !== "'") {
+            textToInsert += '\n' + currentIndent;
+        }
+        
+        const newText = value.substring(0, selectionStart) + textToInsert + value.substring(selectionEnd);
+        onCodeChange(newText);
+        
+        setTimeout(() => {
+            const cursorPosition = selectionStart + 1 + newIndent.length;
+            textarea.selectionStart = cursorPosition;
+            textarea.selectionEnd = cursorPosition;
+        }, 0);
+        return;
+    }
+
+    // --- Auto-closing Brackets/Quotes ---
+    if (Object.keys(BRACKET_PAIRS).includes(e.key)) {
+        e.preventDefault();
+        const opening = e.key;
+        const closing = BRACKET_PAIRS[opening];
+        const selectedText = value.substring(selectionStart, selectionEnd);
+        
+        const newText = 
+            value.substring(0, selectionStart) +
+            opening +
+            selectedText +
+            closing +
+            value.substring(selectionEnd);
+            
+        onCodeChange(newText);
+        
+        setTimeout(() => {
+            textarea.selectionStart = selectionStart + 1;
+            textarea.selectionEnd = selectionStart + 1 + selectedText.length;
+        }, 0);
+        return;
+    }
+
+    // --- Skip-over closing brackets/quotes ---
+    const closingChars = ['}', ')', ']', '"', "'", '`'];
+    if (closingChars.includes(e.key) && selectionStart === selectionEnd && value[selectionStart] === e.key) {
+        e.preventDefault();
+        textarea.selectionStart = selectionStart + 1;
+        textarea.selectionEnd = selectionStart + 1;
+        return;
+    }
+    
+    // --- Backspace to remove pairs ---
+    if (e.key === 'Backspace' && selectionStart === selectionEnd) {
+        const charBefore = value[selectionStart - 1];
+        const charAfter = value[selectionStart];
+        if (BRACKET_PAIRS[charBefore] === charAfter) {
+            e.preventDefault();
+            const newText = value.substring(0, selectionStart - 1) + value.substring(selectionStart + 1);
+            onCodeChange(newText);
+
+            setTimeout(() => {
+                textarea.selectionStart = selectionStart - 1;
+                textarea.selectionEnd = selectionStart - 1;
+            }, 0);
+            return;
         }
     }
   };
@@ -248,33 +407,32 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
     return () => clearTimeout(timer);
   }, [code, updateSuggestions]);
       
-  // Fix: Removed `p-4` from common classes to fix cursor alignment issue.
-  // Padding will be applied specifically where needed.
-  const commonEditorClasses = "w-full h-full font-mono text-base resize-none focus:outline-none whitespace-pre-wrap leading-relaxed tracking-normal";
+  const commonEditorClasses = "w-full h-full font-mono text-base resize-none focus:outline-none whitespace-pre-wrap tracking-normal";
 
   return (
-    <div className={`flex-grow flex ${theme.background} ${theme.border} border rounded-md overflow-hidden`}>
+    <div className={`h-full flex ${theme.background} ${theme.border} border rounded-md overflow-hidden`}>
         <div
             ref={lineNumbersRef}
             data-name="line-number-gutter"
-            className={`py-4 pl-2 pr-4 text-right ${theme.lineNumber} select-none ${theme.lineNumberBg} ${theme.lineNumberBorder || ''} font-mono text-base overflow-y-hidden leading-relaxed`}
+            className={`text-right ${theme.lineNumber} select-none ${theme.lineNumberBg} ${theme.lineNumberBorder || ''} font-mono text-base overflow-hidden leading-relaxed`}
         >
-            {lineNumbers.map(num => (
-                <div 
-                    key={num} 
-                    className={`px-2 rounded-l-sm transition-colors duration-200 ${
-                        num === errorLine ? 'bg-red-500 bg-opacity-30 text-white' : ''
-                    }`}
-                >
-                    {num}
-                </div>
-            ))}
+            <div className="py-4 pl-2 pr-4">
+                {lineNumbers.map(num => (
+                    <div 
+                        key={num} 
+                        className={`px-2 rounded-l-sm transition-colors duration-200 ${
+                            num === errorLine ? 'bg-red-500 bg-opacity-30 text-white' : ''
+                        }`}
+                    >
+                        {num}
+                    </div>
+                ))}
+            </div>
         </div>
         <div className="relative flex-grow h-full">
             <pre
               ref={preRef}
               aria-hidden="true"
-              // Fix: No padding on the <pre> tag itself. Padding is handled by the <code> child via global CSS.
               className={`${commonEditorClasses} ${theme.text} absolute top-0 left-0 pointer-events-none overflow-hidden`}
             >
               <code className={`language-${language === 'cpp' ? 'cpp' : language}`}>
@@ -316,8 +474,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
               onClick={updateSuggestions}
               onKeyDown={handleKeyDown}
               onBlur={() => setIsSuggestionVisible(false)}
-              // Fix: Add `p-4` here to match the `<code>` element's padding, ensuring text alignment.
-              className={`${commonEditorClasses} p-4 bg-transparent text-transparent ${theme.caret} relative z-10 overflow-auto`}
+              className={`${commonEditorClasses} p-4 bg-transparent text-transparent ${theme.caret} relative z-10 overflow-auto leading-relaxed`}
               spellCheck="false"
               autoCapitalize="off"
               autoComplete="off"
@@ -330,18 +487,25 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
                     style={{ top: `${suggestionPosition.top}px`, left: `${suggestionPosition.left}px` }}
                 >
                     <ul className="py-1 max-h-48 overflow-y-auto">
+                        {/* Fix: Updated rendering to show suggestion type and description. */}
                         {suggestions.map((suggestion, index) => (
-                            <li
-                                key={suggestion}
+                             <li
+                                key={`${suggestion.label}-${suggestion.type}`}
                                 onMouseDown={(e) => e.preventDefault()}
                                 onClick={() => handleSuggestionSelect(suggestion)}
-                                className={`px-4 py-1.5 text-base text-gray-200 cursor-pointer ${
+                                className={`px-3 py-2 text-base text-gray-200 cursor-pointer flex justify-between items-center ${
                                     index === activeSuggestionIndex ? 'bg-blue-600' : 'hover:bg-gray-700'
                                 }`}
                                 role="option"
                                 aria-selected={index === activeSuggestionIndex}
                             >
-                                {suggestion}
+                                <div className="flex-grow pr-2">
+                                    <div className="font-medium text-white">{suggestion.label}</div>
+                                    {suggestion.description && <div className="text-xs text-gray-400 mt-0.5 truncate">{suggestion.description}</div>}
+                                </div>
+                                <span className="text-xs text-gray-500 bg-gray-800 flex-shrink-0 ml-4 px-1.5 py-0.5 rounded-sm capitalize">
+                                    {suggestion.type}
+                                </span>
                             </li>
                         ))}
                     </ul>

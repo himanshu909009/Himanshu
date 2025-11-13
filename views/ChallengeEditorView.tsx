@@ -1,8 +1,4 @@
-
-
-
-
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import { ProblemDescription } from '../components/ProblemDescription';
 import { CodeEditor } from '../components/CodeEditor';
 import { OutputDisplay } from '../components/OutputDisplay';
@@ -12,6 +8,7 @@ import { runCodeSimulation, getAiFailureAnalysis, getAiErrorExplanation } from '
 import { AiAgent } from '../components/AiAgent';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { LANGUAGES, DEFAULT_CODE } from '../constants';
+import { TemplateSelectorModal } from '../components/TemplateSelectorModal';
 
 interface ChallengeEditorViewProps {
     challenge: Challenge;
@@ -34,8 +31,7 @@ export function ChallengeEditorView({ challenge, onBack }: ChallengeEditorViewPr
     const [code, setCode] = useState(challenge.boilerplateCode || '');
     const theme = THEMES['dark'];
 
-    const [leftPanelWidth, setLeftPanelWidth] = useState(40);
-    const containerRef = useRef<HTMLDivElement>(null);
+    const [isProblemPanelVisible, setIsProblemPanelVisible] = useState(true);
 
     const [output, setOutput] = useState<SimulationOutput | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -47,6 +43,7 @@ export function ChallengeEditorView({ challenge, onBack }: ChallengeEditorViewPr
     const [errorColumn, setErrorColumn] = useState<number | null>(null);
     const [aiExplanation, setAiExplanation] = useState<string | null>(null);
     const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
+    const [isTemplateModalOpen, setIsTemplateModalOpen] = useState<boolean>(false);
 
     const handleCodeChange = (newCode: string) => {
         setCode(newCode);
@@ -77,6 +74,13 @@ export function ChallengeEditorView({ challenge, onBack }: ChallengeEditorViewPr
         setAiExplanation(null);
     };
     
+    const handleSelectTemplate = (templateCode: string) => {
+        if (window.confirm("This will replace your current code. Are you sure?")) {
+            handleCodeChange(templateCode);
+        }
+        setIsTemplateModalOpen(false);
+    };
+
     const runSingleSimulation = async (simulationInput: string): Promise<SimulationOutput> => {
         const file: VirtualFile = { id: '1', name: getFileName(language), content: code };
         return runCodeSimulation(language, [file], file.id, simulationInput);
@@ -241,70 +245,77 @@ export function ChallengeEditorView({ challenge, onBack }: ChallengeEditorViewPr
         }
     }, [language, code, input, isLoading]);
 
-    const handleMouseDown = useCallback((e: React.MouseEvent) => {
-        e.preventDefault();
-        
-        const startX = e.clientX;
-        const startWidth = (containerRef.current?.querySelector('.left-panel') as HTMLElement)?.offsetWidth || 0;
-        const containerWidth = containerRef.current?.offsetWidth || 0;
-
-        const handleMouseMove = (moveEvent: MouseEvent) => {
-            const dx = moveEvent.clientX - startX;
-            let newWidthPercent = ((startWidth + dx) / containerWidth) * 100;
-            
-            newWidthPercent = Math.max(20, Math.min(80, newWidthPercent));
-            setLeftPanelWidth(newWidthPercent);
-        };
-
-        const handleMouseUp = () => {
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-        };
-
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
-    }, []);
-
     return (
-        <div ref={containerRef} className="flex h-full relative">
-            <div 
-                className="left-panel h-full p-4 sm:p-6 lg:p-8 overflow-y-auto bg-gray-800 rounded-lg"
-                style={{ width: `${leftPanelWidth}%` }}
-            >
-                <button onClick={onBack} className="mb-6 flex items-center text-base text-gray-400 hover:text-white transition group">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    Back to List of Experiments
-                </button>
-                <ProblemDescription challenge={challenge} />
-            </div>
+        <div className="flex h-full relative">
+            {isProblemPanelVisible && (
+                <div 
+                    className="w-2/5 h-full p-4 sm:p-6 lg:p-8 overflow-y-auto bg-gray-800 flex-shrink-0 border-r border-gray-700"
+                >
+                    <button onClick={onBack} className="mb-6 flex items-center text-base text-gray-400 hover:text-white transition group">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Back to List of Experiments
+                    </button>
+                    <ProblemDescription challenge={challenge} />
+                </div>
+            )}
 
             <div 
-                onMouseDown={handleMouseDown}
-                className="w-4 h-full cursor-col-resize bg-gray-700 hover:bg-blue-600 active:bg-blue-500 transition-colors duration-200 flex-shrink-0 flex items-center justify-center group"
+                className="flex flex-col gap-4 h-full p-4 flex-grow"
             >
-                <div className="flex flex-col space-y-1">
-                    {Array.from({ length: 8 }).map((_, i) => (
-                        <div key={i} className="w-2 h-1 bg-gray-500 group-hover:bg-white rounded-sm transition-colors duration-200"></div>
-                    ))}
-                </div>
-            </div>
-
-            <div 
-                className="h-full grid grid-rows-[auto_1fr_auto] bg-gray-800 rounded-lg overflow-hidden"
-                style={{ width: `${100 - leftPanelWidth}%` }}
-            >
-                 <div className="flex justify-between items-center p-3 border-b border-gray-700">
-                    <LanguageSelector
-                        languages={LANGUAGES}
-                        selectedLanguage={language}
-                        onLanguageChange={handleLanguageChange}
-                    />
-                </div>
-                
-                <div className="grid grid-rows-3 gap-4 p-4 min-h-0">
-                    <div className="row-span-2 min-h-0 flex">
+                {/* Editor Column */}
+                <div className="flex-[3] flex flex-col min-h-0">
+                    <div className="flex justify-between items-center mb-2 px-2 py-1 bg-gray-800 rounded-t-md border-b border-gray-700">
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => setIsProblemPanelVisible(!isProblemPanelVisible)}
+                                title={isProblemPanelVisible ? "Hide Problem" : "Show Problem"}
+                                className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-md transition"
+                            >
+                                {isProblemPanelVisible ? (
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414zm-6 0a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 1.414L5.414 10l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                                    </svg>
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                                        <path fillRule="evenodd" d="M4.293 15.707a1 1 0 010-1.414L8.586 10 4.293 5.707a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                )}
+                            </button>
+                            <LanguageSelector
+                                languages={LANGUAGES}
+                                selectedLanguage={language}
+                                onLanguageChange={handleLanguageChange}
+                            />
+                             <button
+                                onClick={() => setIsTemplateModalOpen(true)}
+                                title="Select a template"
+                                className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-md transition"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V4zm2 0v12h6V4H7zm2 2h2a1 1 0 110 2H9a1 1 0 110-2zm0 4h2a1 1 0 110 2H9a1 1 0 110-2z" /></svg>
+                            </button>
+                        </div>
+                         <div className="flex items-center gap-4">
+                            <button 
+                                onClick={handleRunCode}
+                                disabled={isLoading || isTesting}
+                                className="bg-gray-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-gray-500 transition disabled:bg-gray-500/50 disabled:cursor-not-allowed text-base"
+                            >
+                                {isLoading ? 'Running...' : 'Run'}
+                            </button>
+                            <button 
+                                onClick={handleSubmitCode}
+                                disabled={isLoading || isTesting}
+                                className="bg-green-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-green-700 transition disabled:bg-green-500/50 disabled:cursor-not-allowed text-base"
+                            >
+                                {isTesting ? 'Submitting...' : 'Submit'}
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div className="flex-grow min-h-0">
                         <CodeEditor 
                             code={code}
                             onCodeChange={handleCodeChange}
@@ -312,38 +323,22 @@ export function ChallengeEditorView({ challenge, onBack }: ChallengeEditorViewPr
                             errorLine={errorLine}
                             errorColumn={errorColumn}
                             aiExplanation={aiExplanation}
-                            // Fix: Pass language to CodeEditor
                             language={language}
                         />
                     </div>
-                    <div className="row-span-1 min-h-0 flex">
-                        <OutputDisplay
-                            output={output}
-                            isLoading={isLoading}
-                            isTesting={isTesting}
-                            error={error}
-                            onInputSubmit={handleTerminalSubmit}
-                            onClear={handleClearOutput}
-                            testResults={testResults}
-                        />
-                    </div>
                 </div>
-                
-                <div className="flex justify-end items-center p-3 border-t border-gray-700 gap-4">
-                    <button 
-                        onClick={handleRunCode}
-                        disabled={isLoading || isTesting}
-                        className="bg-gray-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-gray-500 transition disabled:bg-gray-500/50 disabled:cursor-not-allowed text-base"
-                    >
-                        {isLoading ? 'Running...' : 'Run Code'}
-                    </button>
-                    <button 
-                        onClick={handleSubmitCode}
-                        disabled={isLoading || isTesting}
-                        className="bg-green-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-green-700 transition disabled:bg-green-500/50 disabled:cursor-not-allowed text-base"
-                    >
-                        {isTesting ? 'Submitting...' : 'Submit Code'}
-                    </button>
+
+                {/* Output Column */}
+                <div className="flex-[2] flex flex-col min-h-0">
+                     <OutputDisplay
+                        output={output}
+                        isLoading={isLoading}
+                        isTesting={isTesting}
+                        error={error}
+                        onInputSubmit={handleTerminalSubmit}
+                        onClear={handleClearOutput}
+                        testResults={testResults}
+                    />
                 </div>
             </div>
 
@@ -357,6 +352,13 @@ export function ChallengeEditorView({ challenge, onBack }: ChallengeEditorViewPr
                     />
                 </div>
             )}
+
+            <TemplateSelectorModal
+                isOpen={isTemplateModalOpen}
+                onClose={() => setIsTemplateModalOpen(false)}
+                onSelect={handleSelectTemplate}
+                language={language}
+            />
         </div>
     );
 }

@@ -79,7 +79,7 @@ export const LANGUAGE_KEYWORDS: Record<Language, string[]> = {
     'double', 'else', 'enum', 'extern', 'float', 'for', 'goto', 'if',
     'int', 'long', 'register', 'return', 'short', 'signed', 'sizeof', 'static',
     'struct', 'switch', 'typedef', 'union', 'unsigned', 'void', 'volatile', 'while',
-    '#include', '#define', '#ifdef', '#ifndef', '#endif', '#if', '#else', 'printf', 'scanf', 'main'
+    '#include', '#define', '#ifdef', '#ifndef', '#endif', '#if', '#else'
   ],
   cpp: [
     'alignas', 'alignof', 'and', 'and_eq', 'asm', 'auto', 'bitand', 'bitor', 'bool', 'break', 'case',
@@ -95,7 +95,7 @@ export const LANGUAGE_KEYWORDS: Record<Language, string[]> = {
     'struct', 'switch', 'template', 'this', 'thread_local',
     'throw', 'true', 'try', 'typedef', 'typeid', 'typename', 'union',
     'unsigned', 'using', 'virtual', 'void', 'volatile', 'wchar_t', 'while',
-    'xor', 'xor_eq', '#include', '#define', 'std', 'cout', 'cin', 'endl', 'main'
+    'xor', 'xor_eq', '#include', '#define'
   ],
   java: [
     'abstract', 'assert', 'boolean', 'break', 'byte', 'case', 'catch', 'char',
@@ -104,8 +104,7 @@ export const LANGUAGE_KEYWORDS: Record<Language, string[]> = {
     'import', 'instanceof', 'int', 'interface', 'long', 'native', 'new',
     'package', 'private', 'protected', 'public', 'return', 'short', 'static',
     'strictfp', 'super', 'switch', 'synchronized', 'this', 'throw', 'throws',
-    'transient', 'try', 'void', 'volatile', 'while', 'true', 'false', 'null',
-    'String', 'System', 'out', 'println', 'main'
+    'transient', 'try', 'void', 'volatile', 'while', 'true', 'false', 'null'
   ],
   javascript: [
     'abstract', 'arguments', 'await', 'boolean', 'break', 'byte', 'case',
@@ -116,14 +115,37 @@ export const LANGUAGE_KEYWORDS: Record<Language, string[]> = {
     'long', 'native', 'new', 'null', 'package', 'private', 'protected',
     'public', 'return', 'short', 'static', 'super', 'switch', 'synchronized',
     'this', 'throw', 'throws', 'transient', 'true', 'try', 'typeof', 'var',
-    'void', 'volatile', 'while', 'with', 'yield', 'async', 'of', 'console', 'log'
+    'void', 'volatile', 'while', 'with', 'yield', 'async', 'of'
   ],
   python: [
     'False', 'None', 'True', 'and', 'as', 'assert', 'async', 'await', 'break',
     'class', 'continue', 'def', 'del', 'elif', 'else', 'except', 'finally',
     'for', 'from', 'global', 'if', 'import', 'in', 'is', 'lambda',
     'nonlocal', 'not', 'or', 'pass', 'raise', 'return', 'try', 'while',
-    'with', 'yield', 'print', 'input', 'range', 'len'
+    'with', 'yield'
+  ]
+};
+
+export const LANGUAGE_FUNCTIONS: Record<Language, string[]> = {
+  c: [
+    'printf', 'scanf', 'malloc', 'free', 'fopen', 'fclose', 'strcpy', 'strlen', 'sizeof'
+  ],
+  cpp: [
+    'std::cout', 'std::cin', 'std::endl', 'std::vector', 'std::string', 'std::sort', 
+    'std::max', 'std::min', 'push_back', 'pop_back', 'size', 'begin', 'end'
+  ],
+  java: [
+    'System.out.println', 'Math.max', 'Math.min', 'String.length', 'ArrayList.add', 
+    'ArrayList.get', 'HashMap.put', 'HashMap.get', 'Integer.parseInt'
+  ],
+  javascript: [
+    'console.log', 'Math.max', 'Math.min', 'Array.prototype.push', 'Array.prototype.pop', 
+    'Array.prototype.map', 'Array.prototype.filter', 'String.prototype.length', 
+    'JSON.parse', 'JSON.stringify', 'document.getElementById'
+  ],
+  python: [
+    'print', 'input', 'len', 'range', 'str', 'int', 'float', 'list.append', 
+    'list.pop', 'dict.get', 'sorted', 'max', 'min'
   ]
 };
 
