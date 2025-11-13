@@ -7,7 +7,7 @@ interface ProblemDescriptionProps {
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
     <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-200 mb-3">{title}</h2>
+        <h2 className="text-2xl font-bold text-gray-200 mb-3">{title}</h2>
         <div className="text-gray-300 leading-relaxed space-y-4 max-w-none">
             {children}
         </div>
@@ -64,17 +64,41 @@ export const ProblemDescription: React.FC<ProblemDescriptionProps> = ({ challeng
 
     return (
         <div>
-            <Section title="Objective">
+            <Section title="Problem Statement">
                 {renderContent(challenge.objective)}
             </Section>
 
-            <Section title="Output Format">
-                <p className="text-base">{renderTextWithCode(challenge.outputFormat)}</p>
-            </Section>
+            {challenge.inputFormat && (
+                <Section title="Input Format">
+                    <p className="text-base">{renderTextWithCode(challenge.inputFormat)}</p>
+                </Section>
+            )}
 
-            <Section title="Sample Output">
-                <CodeBlock>{challenge.sampleOutput}</CodeBlock>
-            </Section>
+            {challenge.outputFormat && (
+                <Section title="Output Format">
+                    <p className="text-base">{renderTextWithCode(challenge.outputFormat)}</p>
+                </Section>
+            )}
+
+            {challenge.constraints && (
+                <Section title="Constraints">
+                    <pre className="bg-gray-900 p-3 rounded-md text-base whitespace-pre-wrap">
+                        <code>{challenge.constraints}</code>
+                    </pre>
+                </Section>
+            )}
+
+            {challenge.sampleInput !== undefined && (
+                <Section title="Sample Input">
+                    <CodeBlock>{challenge.sampleInput || '(No Input)'}</CodeBlock>
+                </Section>
+            )}
+
+            {challenge.sampleOutput && (
+                <Section title="Sample Output">
+                    <CodeBlock>{challenge.sampleOutput}</CodeBlock>
+                </Section>
+            )}
         </div>
     );
 };

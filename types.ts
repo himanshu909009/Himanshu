@@ -169,7 +169,10 @@ export interface Challenge {
   description: string;
   isSolved: boolean;
   objective?: string;
+  inputFormat?: string;
   outputFormat?: string;
+  constraints?: string;
+  sampleInput?: string;
   sampleOutput?: string;
   boilerplateCode?: string;
   testCases?: TestCase[];

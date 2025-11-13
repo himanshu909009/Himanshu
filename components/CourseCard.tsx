@@ -14,10 +14,8 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onSelect }) => {
       </div>
       <h3 className="text-xl font-bold text-white mb-2">{course.title}</h3>
       <p className="text-base text-gray-400 mb-4">{course.category}</p>
-      <div className="flex justify-between text-sm text-gray-400">
-        <span>{course.lessons} Lessons</span>
-        <span>{course.hours} hours</span>
-        <span>{course.level}</span>
+      <div className="flex text-sm text-gray-400">
+        <span>{course.lessons} Experiments</span>
       </div>
     </div>
   );
