@@ -15,7 +15,7 @@ type View = 'courses' | 'compiler' | 'practice' | 'challengeList' | 'challengeEd
 const USER_STORAGE_KEY = 'userProfile';
 
 function App() {
-  const [currentView, setCurrentView] = useState<View>('compiler');
+  const [currentView, setCurrentView] = useState<View>('courses');
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [selectedChallengeId, setSelectedChallengeId] = useState<number | null>(null);
   
@@ -70,7 +70,7 @@ function App() {
   const renderView = () => {
     switch (currentView) {
       case 'courses':
-        return <CoursesView onCourseSelect={(courseTitle) => handleNavigate('challengeList', courseTitle)} />;
+        return <CoursesView user={user} onCourseSelect={(courseTitle) => handleNavigate('challengeList', courseTitle)} />;
       case 'practice':
         return <ProblemsView onCourseSelect={(courseTitle) => handleNavigate('challengeList', courseTitle)} />;
       case 'compiler':
