@@ -1,6 +1,7 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 // Fix: Add Language to imports
 import type { Language, Theme, ThemeName } from '../types';
+import { LANGUAGE_KEYWORDS } from '../constants';
 
 interface CodeEditorProps {
   code: string;
@@ -23,6 +24,19 @@ const themeMap: Record<ThemeName, string> = {
   monokai: 'monokai',
 };
 
+const getCurrentWordInfo = (text: string, cursorPosition: number) => {
+    let startIndex = cursorPosition;
+    // Handles keywords that start with '#' like #include
+    if (startIndex > 0 && text[startIndex - 1] === '#') {
+        startIndex--;
+    }
+    while (startIndex > 0 && /[\w#]/.test(text[startIndex - 1])) {
+        startIndex--;
+    }
+    const word = text.substring(startIndex, cursorPosition);
+    return { word, start: startIndex };
+};
+
 // Fix: Destructure language from props
 export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, theme, language, errorLine, errorColumn, aiExplanation, snippetToInsert }) => {
   const lineNumbers = code.split('\n').map((_, index) => index + 1);
@@ -37,6 +51,78 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
   const [lineHeight, setLineHeight] = useState(0);
   const [padding, setPadding] = useState({ top: 16, left: 16 });
 
+  // Autosuggestion state
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isSuggestionVisible, setIsSuggestionVisible] = useState(false);
+  const [suggestionPosition, setSuggestionPosition] = useState({ top: 0, left: 0 });
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
+  const [currentWord, setCurrentWord] = useState<{ word: string; start: number } | null>(null);
+  
+  const updateSuggestions = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (!textarea || !charWidth || !lineHeight) {
+        setIsSuggestionVisible(false);
+        return;
+    }
+
+    const { value, selectionStart } = textarea;
+    if (selectionStart !== textarea.selectionEnd) {
+        setIsSuggestionVisible(false);
+        return;
+    }
+    
+    const { word, start } = getCurrentWordInfo(value, selectionStart);
+
+    if (word.length > 0) {
+        const allKeywords = LANGUAGE_KEYWORDS[language] || [];
+        const filteredSuggestions = allKeywords.filter(kw => kw.startsWith(word) && kw !== word);
+
+        if (filteredSuggestions.length > 0) {
+            const textUpToWordStart = value.substring(0, start);
+            const lines = textUpToWordStart.split('\n');
+            const lineNum = lines.length;
+            const colNum = lines[lines.length - 1].length;
+            
+            const top = padding.top + (lineNum) * lineHeight - textarea.scrollTop;
+            const left = padding.left + colNum * charWidth - textarea.scrollLeft;
+            
+            setSuggestionPosition({ top, left });
+            setSuggestions(filteredSuggestions);
+            setIsSuggestionVisible(true);
+            setActiveSuggestionIndex(0);
+            setCurrentWord({ word, start });
+        } else {
+            setIsSuggestionVisible(false);
+        }
+    } else {
+        setIsSuggestionVisible(false);
+    }
+  }, [language, charWidth, lineHeight, padding.top, padding.left]);
+
+  const handleSuggestionSelect = (suggestion: string) => {
+    if (!currentWord || !textareaRef.current) return;
+    
+    const { start, word } = currentWord;
+    const textarea = textareaRef.current;
+    const value = textarea.value;
+
+    const endOfWord = start + word.length;
+    
+    const newText = value.substring(0, start) + suggestion + ' ' + value.substring(endOfWord);
+    onCodeChange(newText);
+    
+    setTimeout(() => {
+        if (textareaRef.current) {
+            const newCursorPosition = start + suggestion.length + 1;
+            textareaRef.current.focus();
+            textareaRef.current.selectionStart = newCursorPosition;
+            textareaRef.current.selectionEnd = newCursorPosition;
+        }
+    }, 0);
+
+    setIsSuggestionVisible(false);
+  };
+  
   useEffect(() => {
     if (snippetToInsert && textareaRef.current) {
       const { code: snippetCode } = snippetToInsert;
@@ -115,6 +201,9 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
     if (lineNumbersRef.current) {
       lineNumbersRef.current.scrollTop = scrollTop;
     }
+    if (isSuggestionVisible) {
+        updateSuggestions();
+    }
   };
 
   const handleMouseEnterOnError = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -134,6 +223,30 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
   const handleMouseLeaveOnError = () => {
     setIsTooltipVisible(false);
   };
+  
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (isSuggestionVisible && suggestions.length > 0) {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setActiveSuggestionIndex(prev => (prev + 1) % suggestions.length);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setActiveSuggestionIndex(prev => (prev - 1 + suggestions.length) % suggestions.length);
+        } else if (e.key === 'Enter' || e.key === 'Tab') {
+            e.preventDefault();
+            handleSuggestionSelect(suggestions[activeSuggestionIndex]);
+        } else if (e.key === 'Escape') {
+            setIsSuggestionVisible(false);
+        }
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+        updateSuggestions();
+    }, 150); // Debounce
+    return () => clearTimeout(timer);
+  }, [code, updateSuggestions]);
       
   // Fix: Removed `p-4` from common classes to fix cursor alignment issue.
   // Padding will be applied specifically where needed.
@@ -199,6 +312,10 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
               value={code}
               onChange={(e) => onCodeChange(e.target.value)}
               onScroll={handleScroll}
+              onKeyUp={(e) => ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key) && updateSuggestions()}
+              onClick={updateSuggestions}
+              onKeyDown={handleKeyDown}
+              onBlur={() => setIsSuggestionVisible(false)}
               // Fix: Add `p-4` here to match the `<code>` element's padding, ensuring text alignment.
               className={`${commonEditorClasses} p-4 bg-transparent text-transparent ${theme.caret} relative z-10 overflow-auto`}
               spellCheck="false"
@@ -207,6 +324,29 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
               autoCorrect="off"
               aria-label="Code Editor"
             />
+            {isSuggestionVisible && (
+                <div
+                    className="absolute z-30 bg-gray-900 border border-gray-700 rounded-md shadow-lg"
+                    style={{ top: `${suggestionPosition.top}px`, left: `${suggestionPosition.left}px` }}
+                >
+                    <ul className="py-1 max-h-48 overflow-y-auto">
+                        {suggestions.map((suggestion, index) => (
+                            <li
+                                key={suggestion}
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleSuggestionSelect(suggestion)}
+                                className={`px-4 py-1.5 text-base text-gray-200 cursor-pointer ${
+                                    index === activeSuggestionIndex ? 'bg-blue-600' : 'hover:bg-gray-700'
+                                }`}
+                                role="option"
+                                aria-selected={index === activeSuggestionIndex}
+                            >
+                                {suggestion}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
             {isTooltipVisible && aiExplanation && (
                 <div
                     className="absolute z-20 p-4 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl max-w-lg"
