@@ -174,3 +174,9 @@ export interface Challenge {
   boilerplateCode?: string;
   testCases?: TestCase[];
 }
+
+export interface Snippet {
+  title: string;
+  description: string;
+  code: string;
+}

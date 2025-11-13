@@ -1,8 +1,10 @@
 import React from 'react';
+import type { User } from '../types';
 
 interface HeaderProps {
   currentView: string;
   onNavigate: (view: string) => void;
+  user: User;
 }
 
 const NavLink: React.FC<{
@@ -23,7 +25,7 @@ const NavLink: React.FC<{
   </button>
 );
 
-export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
+export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, user }) => {
   return (
     <header className="bg-gray-800 border-b border-gray-700">
       <nav className="px-4 sm:px-6 lg:px-8">
@@ -38,6 +40,21 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate }) => {
                 <NavLink view="practice" currentView={currentView} onNavigate={onNavigate}>Practice</NavLink>
                 <NavLink view="compiler" currentView={currentView} onNavigate={onNavigate}>Compiler</NavLink>
               </div>
+            </div>
+          </div>
+          <div className="hidden md:block">
+            <div className="ml-4 flex items-center md:ml-6">
+                <button 
+                  onClick={() => onNavigate('profile')} 
+                  className="p-1 bg-gray-800 rounded-full text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
+                  aria-label="View profile"
+                >
+                    <img
+                        className="h-10 w-10 rounded-full object-cover"
+                        src={user.avatarUrl}
+                        alt={`${user.name}'s profile picture`}
+                    />
+                </button>
             </div>
           </div>
         </div>

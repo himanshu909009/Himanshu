@@ -2,7 +2,7 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 // Fix: Use 'import type' for type-only imports and combine them.
-import type { Language, SimulationOutput, VirtualFile } from '../types';
+import type { Language, SimulationOutput, VirtualFile, TestCase } from '../types';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -215,5 +215,63 @@ export async function getAiCodeFeedback(language: Language, code: string): Promi
     } catch (error) {
         console.error("Error getting AI feedback:", error);
         return "Sorry, I couldn't analyze your code. Please try again.";
+    }
+}
+
+export async function getAiFailureAnalysis(
+    language: Language, 
+    code: string, 
+    testCaseInput: string,
+    expectedOutput: string,
+    actualOutput: string, // This can be either stdout or stderr
+    isRuntimeError: boolean
+): Promise<string> {
+    const failureType = isRuntimeError ? "produced a runtime error" : "produced the wrong output";
+    const actualOutputDescription = isRuntimeError ? "Runtime Error (stderr)" : "Actual Output (stdout)";
+
+    const prompt = `
+        You are a friendly and helpful AI coding tutor. A programmer's code has failed a test case.
+        Your task is to analyze the code, the input, and the output to explain the logical error and suggest a fix.
+
+        **Language:** ${language}
+
+        **The user's code:**
+        \`\`\`${language}
+        ${code}
+        \`\`\`
+
+        **Test Case Details:**
+        - **Input (stdin):**
+        \`\`\`
+        ${testCaseInput || "(empty)"}
+        \`\`\`
+        - **Expected Output (stdout):**
+        \`\`\`
+        ${expectedOutput}
+        \`\`\`
+        - **Result:** The code ${failureType}.
+        - **${actualOutputDescription}:**
+        \`\`\`
+        ${actualOutput}
+        \`\`\`
+
+        **Instructions:**
+        1.  Start by greeting the user in a friendly tone and acknowledge that debugging is a normal part of programming.
+        2.  Explain the discrepancy. What was the code supposed to do based on the input and expected output? What did it do instead?
+        3.  Analyze the user's code to find the most likely logical error that caused this failure. Point to specific lines or blocks of code.
+        4.  Explain *why* this part of the code is incorrect for the given test case. For example, "Your loop condition is off-by-one, which causes it to miss the last element," or "You are not handling the edge case where the input is empty."
+        5.  Suggest a clear and specific way to fix the code. Provide a corrected code snippet if it's helpful.
+        6.  Keep your tone encouraging, constructive, and focused on helping the user learn.
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+        return response.text;
+    } catch (error) {
+        console.error("Error getting AI failure analysis:", error);
+        return "Sorry, I couldn't analyze this test case failure. Please try again.";
     }
 }

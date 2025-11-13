@@ -15,7 +15,7 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
 );
 
 const CodeBlock: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <pre className="bg-gray-900 p-3 rounded-md text-2xl">
+    <pre className="bg-gray-900 p-3 rounded-md text-base">
         <code>{children}</code>
     </pre>
 );
@@ -26,7 +26,7 @@ export const ProblemDescription: React.FC<ProblemDescriptionProps> = ({ challeng
         const parts = text.split(/(`[^`]+`)/g);
         return parts.map((part, index) => {
             if (part.startsWith('`') && part.endsWith('`')) {
-                return <code key={index} className="bg-gray-700 text-2xl rounded px-1.5 py-0.5 font-mono">{part.slice(1, -1)}</code>;
+                return <code key={index} className="bg-gray-700 text-base rounded px-1.5 py-0.5 font-mono">{part.slice(1, -1)}</code>;
             }
             return part;
         });
@@ -46,7 +46,7 @@ export const ProblemDescription: React.FC<ProblemDescriptionProps> = ({ challeng
                 
                 if (isCodeLine) {
                     if (currentParagraph.length > 0) {
-                        elements.push(<p key={`${pIndex}-${lIndex}-p`} className="text-2xl">{renderTextWithCode(currentParagraph.join(' '))}</p>);
+                        elements.push(<p key={`${pIndex}-${lIndex}-p`} className="text-base">{renderTextWithCode(currentParagraph.join(' '))}</p>);
                         currentParagraph = [];
                     }
                     elements.push(<CodeBlock key={`${pIndex}-${lIndex}-c`}>{line.slice(1, -1)}</CodeBlock>);
@@ -56,7 +56,7 @@ export const ProblemDescription: React.FC<ProblemDescriptionProps> = ({ challeng
             });
 
             if (currentParagraph.length > 0) {
-                elements.push(<p key={`${pIndex}-last-p`} className="text-2xl">{renderTextWithCode(currentParagraph.join(' '))}</p>);
+                elements.push(<p key={`${pIndex}-last-p`} className="text-base">{renderTextWithCode(currentParagraph.join(' '))}</p>);
             }
         });
         return elements;
@@ -69,7 +69,7 @@ export const ProblemDescription: React.FC<ProblemDescriptionProps> = ({ challeng
             </Section>
 
             <Section title="Output Format">
-                <p className="text-2xl">{renderTextWithCode(challenge.outputFormat)}</p>
+                <p className="text-base">{renderTextWithCode(challenge.outputFormat)}</p>
             </Section>
 
             <Section title="Sample Output">

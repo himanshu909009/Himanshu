@@ -1,12 +1,12 @@
+
+
 import React, { useState, useCallback, useRef } from 'react';
 import { ProblemDescription } from '../components/ProblemDescription';
 import { CodeEditor } from '../components/CodeEditor';
 import { OutputDisplay } from '../components/OutputDisplay';
-import { Tabs } from '../components/Tabs';
-import { TestCasesManager } from '../components/TestCasesManager';
 import { THEMES } from '../themes';
-import type { Challenge, SimulationOutput, VirtualFile, Language, TestCase, TestResult } from '../types';
-import { runCodeSimulation, getAiErrorExplanation, getAiCodeFeedback } from '../services/geminiService';
+import type { Challenge, SimulationOutput, VirtualFile, Language, TestResult } from '../types';
+import { runCodeSimulation, getAiFailureAnalysis, getAiCodeFeedback, getAiErrorExplanation } from '../services/geminiService';
 import { AiAgent } from '../components/AiAgent';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { LANGUAGES, DEFAULT_CODE } from '../constants';
@@ -38,16 +38,13 @@ export function ChallengeEditorView({ challenge, onBack }: ChallengeEditorViewPr
     const [output, setOutput] = useState<SimulationOutput | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isTesting, setIsTesting] = useState<boolean>(false);
+    const [testResults, setTestResults] = useState<TestResult[] | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [input, setInput] = useState<string>("");
     const [errorLine, setErrorLine] = useState<number | null>(null);
     const [errorColumn, setErrorColumn] = useState<number | null>(null);
     const [aiExplanation, setAiExplanation] = useState<string | null>(null);
     const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
-
-    const [testCases, setTestCases] = useState<TestCase[]>(challenge.testCases || []);
-    const [testResults, setTestResults] = useState<TestResult[] | null>(null);
-    const [activeTab, setActiveTab] = useState('tests');
 
     const handleCodeChange = (newCode: string) => {
         setCode(newCode);
@@ -64,18 +61,18 @@ export function ChallengeEditorView({ challenge, onBack }: ChallengeEditorViewPr
         setOutput(null);
         setError(null);
         setInput("");
+        setTestResults(null);
         setErrorLine(null);
         setErrorColumn(null);
         setAiExplanation(null);
-        setTestResults(null);
     };
 
     const handleClearOutput = () => {
         setOutput(null);
         setError(null);
         setInput("");
-        setAiExplanation(null);
         setTestResults(null);
+        setAiExplanation(null);
     };
     
     const runSingleSimulation = async (simulationInput: string): Promise<SimulationOutput> => {
@@ -96,7 +93,6 @@ export function ChallengeEditorView({ challenge, onBack }: ChallengeEditorViewPr
         setErrorColumn(null);
         setInput("");
         setAiExplanation(null);
-        setActiveTab('output');
 
         try {
             const result = await runSingleSimulation("");
@@ -112,12 +108,128 @@ export function ChallengeEditorView({ challenge, onBack }: ChallengeEditorViewPr
             setIsLoading(false);
         }
     }, [language, code]);
+
+    const handleSubmitCode = useCallback(async () => {
+        if (!code.trim()) {
+            setError("Code cannot be empty.");
+            return;
+        }
+        setIsTesting(true);
+        setOutput(null);
+        setTestResults(null);
+        setError(null);
+        setErrorLine(null);
+        setErrorColumn(null);
+        setAiExplanation(null);
+        
+        const results: TestResult[] = [];
+        let firstFailedResult: TestResult | null = null;
+        
+        const compilationCheck = await runSingleSimulation("");
+        if (compilationCheck.compilation.status === 'error') {
+            setOutput(compilationCheck);
+            setErrorLine(compilationCheck.compilation.line ?? null);
+            setErrorColumn(compilationCheck.compilation.column ?? null);
+            setIsTesting(false);
+            
+            setIsAiLoading(true);
+            try {
+                const explanation = await getAiErrorExplanation(language, code, compilationCheck.compilation.message);
+                setAiExplanation(explanation);
+            } catch(e) {
+                console.error("Failed to get AI explanation for compile error", e);
+            } finally {
+                setIsAiLoading(false);
+            }
+            return;
+        }
+
+        for (const testCase of challenge.testCases || []) {
+            try {
+                const result = await runSingleSimulation(testCase.input);
+                
+                let status: TestResult['status'] = 'fail';
+                let errorMessage: string | undefined;
+
+                if (result.output.stderr) {
+                    status = 'error';
+                    errorMessage = result.output.stderr;
+                } else if (result.output.stdout.trim() === testCase.expectedOutput.trim()) {
+                    status = 'pass';
+                }
+
+                const testResult: TestResult = {
+                    testCase,
+                    status,
+                    actualOutput: result.output.stdout,
+                    errorMessage,
+                };
+
+                results.push(testResult);
+
+                if (status !== 'pass' && !firstFailedResult) {
+                    firstFailedResult = testResult;
+                }
+            } catch (e) {
+                const errorMessage = e instanceof Error ? e.message : "An unknown error occurred during test case execution.";
+                const errorResult = {
+                    testCase,
+                    status: 'error' as const,
+                    actualOutput: '',
+                    errorMessage: errorMessage,
+                };
+                results.push(errorResult);
+                if (!firstFailedResult) {
+                    firstFailedResult = errorResult;
+                }
+            }
+        }
+
+        setTestResults(results);
+
+        if (firstFailedResult) {
+            setIsAiLoading(true);
+            try {
+                const isRuntimeError = firstFailedResult.status === 'error';
+                const actualOutput = isRuntimeError ? (firstFailedResult.errorMessage || '') : firstFailedResult.actualOutput;
+
+                const explanation = await getAiFailureAnalysis(
+                    language, 
+                    code, 
+                    firstFailedResult.testCase.input,
+                    firstFailedResult.testCase.expectedOutput,
+                    actualOutput,
+                    isRuntimeError
+                );
+                setAiExplanation(explanation);
+            } catch (e) {
+                console.error("Failed to get AI analysis", e);
+                setAiExplanation("Sorry, I couldn't analyze this failure.");
+            } finally {
+                setIsAiLoading(false);
+            }
+        } else {
+            setIsAiLoading(true);
+            try {
+                const feedback = await getAiCodeFeedback(language, code);
+                setAiExplanation(feedback);
+            } catch(e) {
+                console.error("Failed to get AI feedback", e);
+            } finally {
+                setIsAiLoading(false);
+            }
+        }
+
+        setIsTesting(false);
+
+    }, [language, code, challenge.testCases]);
     
     const handleTerminalSubmit = useCallback(async (newLine: string) => {
         if (isLoading) return;
         
         setIsLoading(true);
         setError(null);
+        setTestResults(null);
         
         const newInput = input + newLine + '\n';
         setInput(newInput);
@@ -136,40 +248,6 @@ export function ChallengeEditorView({ challenge, onBack }: ChallengeEditorViewPr
             setIsLoading(false);
         }
     }, [language, code, input, isLoading]);
-
-    const handleRunTests = useCallback(async () => {
-        if (!code.trim()) {
-            setError("Code cannot be empty to run tests.");
-            setActiveTab('output');
-            return;
-        }
-        setIsTesting(true);
-        setTestResults(null);
-        setOutput(null);
-        setError(null);
-        setActiveTab('output');
-
-        const results: TestResult[] = [];
-        for (const testCase of testCases) {
-            try {
-                const result = await runSingleSimulation(testCase.input);
-                if (result.compilation.status === 'error') {
-                    results.push({ testCase, status: 'error', actualOutput: '', errorMessage: result.compilation.message });
-                    continue;
-                }
-                const actualOutput = result.output.stdout.trim();
-                const expectedOutput = testCase.expectedOutput.trim();
-                const status = actualOutput === expectedOutput ? 'pass' : 'fail';
-                results.push({ testCase, status, actualOutput });
-            } catch (e) {
-                const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
-                results.push({ testCase, status: 'error', actualOutput: '', errorMessage });
-            }
-        }
-        setTestResults(results);
-        setIsTesting(false);
-    }, [language, code, testCases]);
-
 
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
@@ -233,8 +311,8 @@ export function ChallengeEditorView({ challenge, onBack }: ChallengeEditorViewPr
                     />
                 </div>
                 
-                <div className="grid grid-rows-2 gap-4 p-4 min-h-0">
-                    <div className="row-span-1 min-h-0 flex">
+                <div className="grid grid-rows-3 gap-4 p-4 min-h-0">
+                    <div className="row-span-2 min-h-0 flex">
                         <CodeEditor 
                             code={code}
                             onCodeChange={handleCodeChange}
@@ -242,29 +320,20 @@ export function ChallengeEditorView({ challenge, onBack }: ChallengeEditorViewPr
                             errorLine={errorLine}
                             errorColumn={errorColumn}
                             aiExplanation={aiExplanation}
+                            // Fix: Pass language to CodeEditor
+                            language={language}
                         />
                     </div>
                     <div className="row-span-1 min-h-0 flex">
-                        <Tabs activeTab={activeTab} onTabChange={setActiveTab}>
-                            <div data-id="tests" data-title="Test Cases" className="h-full">
-                                <TestCasesManager
-                                    testCases={testCases}
-                                    onTestCasesChange={setTestCases}
-                                    theme={theme}
-                                />
-                            </div>
-                            <div data-id="output" data-title="Output / Results" className="h-full">
-                                <OutputDisplay
-                                    output={output}
-                                    isLoading={isLoading}
-                                    isTesting={isTesting}
-                                    error={error}
-                                    onInputSubmit={handleTerminalSubmit}
-                                    onClear={handleClearOutput}
-                                    testResults={testResults}
-                                />
-                            </div>
-                        </Tabs>
+                        <OutputDisplay
+                            output={output}
+                            isLoading={isLoading}
+                            isTesting={isTesting}
+                            error={error}
+                            onInputSubmit={handleTerminalSubmit}
+                            onClear={handleClearOutput}
+                            testResults={testResults}
+                        />
                     </div>
                 </div>
                 
@@ -272,23 +341,16 @@ export function ChallengeEditorView({ challenge, onBack }: ChallengeEditorViewPr
                     <button 
                         onClick={handleRunCode}
                         disabled={isLoading || isTesting}
-                        className="bg-gray-700 text-white font-semibold py-2 px-6 rounded-md hover:bg-gray-600 transition disabled:bg-gray-500 disabled:cursor-not-allowed text-base"
+                        className="bg-gray-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-gray-500 transition disabled:bg-gray-500/50 disabled:cursor-not-allowed text-base"
                     >
                         {isLoading ? 'Running...' : 'Run Code'}
                     </button>
-                    <button
-                        onClick={handleRunTests}
+                    <button 
+                        onClick={handleSubmitCode}
                         disabled={isLoading || isTesting}
-                        className="bg-blue-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-blue-700 transition disabled:bg-gray-500 disabled:cursor-not-allowed text-base"
+                        className="bg-green-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-green-700 transition disabled:bg-green-500/50 disabled:cursor-not-allowed text-base"
                     >
-                        {isTesting ? 'Testing...' : 'Run Tests'}
-                    </button>
-                    <button
-                        onClick={handleRunTests}
-                        disabled={isLoading || isTesting}
-                        className="bg-green-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-green-700 transition text-base"
-                    >
-                        Submit Code
+                        {isTesting ? 'Submitting...' : 'Submit Code'}
                     </button>
                 </div>
             </div>

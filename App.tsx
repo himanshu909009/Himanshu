@@ -5,15 +5,44 @@ import { CoursesView } from './views/DashboardView';
 import { CompilerView } from './views/CompilerView';
 import { ChallengeListView } from './views/ChallengeListView';
 import { ChallengeEditorView } from './views/ChallengeEditorView';
-import { CPP_CHALLENGES, PRACTICE_PROBLEMS, SUBJECT_PROBLEMS } from './constants';
+import { CPP_CHALLENGES, PRACTICE_PROBLEMS, SUBJECT_PROBLEMS, INITIAL_USER } from './constants';
 import { ProblemsView } from './views/ProblemsView';
+import { ProfileView } from './views/ProfileView';
+import type { User } from './types';
 
-type View = 'courses' | 'compiler' | 'practice' | 'challengeList' | 'challengeEditor';
+type View = 'courses' | 'compiler' | 'practice' | 'challengeList' | 'challengeEditor' | 'profile';
+
+const USER_STORAGE_KEY = 'userProfile';
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('compiler');
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [selectedChallengeId, setSelectedChallengeId] = useState<number | null>(null);
+  
+  const [user, setUser] = useState<User>(() => {
+    try {
+      const savedUserJSON = localStorage.getItem(USER_STORAGE_KEY);
+      if (savedUserJSON) {
+        return JSON.parse(savedUserJSON);
+      }
+    } catch (error) {
+      console.error('Error reading user from localStorage:', error);
+    }
+    // If nothing in storage or parsing fails, return initial user and save it.
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(INITIAL_USER));
+    return INITIAL_USER;
+  });
+
+  const handleUserUpdate = (updatedUser: User) => {
+    try {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
+      setUser(updatedUser);
+    } catch (error) {
+      console.error('Error saving user to localStorage:', error);
+      // Still update state even if localStorage fails
+      setUser(updatedUser);
+    }
+  };
 
   const handleNavigate = (view: View, context?: string | number) => {
     setCurrentView(view);
@@ -35,6 +64,8 @@ function App() {
         return <ProblemsView onCourseSelect={(courseTitle) => handleNavigate('challengeList', courseTitle)} />;
       case 'compiler':
         return <CompilerView />;
+      case 'profile':
+        return <ProfileView user={user} onUserUpdate={handleUserUpdate} />;
       case 'challengeList':
         const allPracticeProblems = [...PRACTICE_PROBLEMS, ...SUBJECT_PROBLEMS];
         const cameFromPractice = allPracticeProblems.some(p => p.name === selectedCourse);
@@ -86,7 +117,11 @@ function App() {
 
   return (
     <div className="bg-gray-900 text-white h-screen flex flex-col">
-      <Header currentView={currentView} onNavigate={handleNavigate as (view: string) => void} />
+      <Header 
+        currentView={currentView} 
+        onNavigate={handleNavigate as (view: string) => void}
+        user={user}
+      />
       <main className="flex-grow min-h-0">
         {renderView()}
       </main>

@@ -1,5 +1,5 @@
 // Fix: Populated the file with constant data used across the application.
-import type { Language, LanguageOption, User, Course, PracticeProblem, Contest, PastContest, LeaderboardUser, ContestProblem, RecentActivityItem, CourseDetails, Challenge } from './types';
+import type { Language, LanguageOption, User, Course, PracticeProblem, Contest, PastContest, LeaderboardUser, ContestProblem, RecentActivityItem, CourseDetails, Challenge, Snippet } from './types';
 
 export const LANGUAGES: LanguageOption[] = [
   { id: 'c', name: 'C' },
@@ -29,6 +29,48 @@ int main() {
 }`,
   javascript: `console.log("Hello, World!");`,
   python: `print("Hello, World!")`,
+};
+
+export const CODE_SNIPPETS: Record<Language, Snippet[]> = {
+  c: [
+    { title: 'For Loop', description: 'A standard for loop.', code: 'for (int i = 0; i < 10; i++) {\n    // code here\n}' },
+    { title: 'While Loop', description: 'A standard while loop.', code: 'while (condition) {\n    // code here\n}' },
+    { title: 'If-Else', description: 'A conditional statement.', code: 'if (condition) {\n    // code here\n} else {\n    // code here\n}' },
+    { title: 'Function', description: 'A basic function definition.', code: 'void functionName() {\n    // code here\n}' },
+    { title: 'Read Input (scanf)', description: 'Read integer from stdin.', code: 'int num;\nscanf("%d", &num);' },
+  ],
+  cpp: [
+    { title: 'For Loop', description: 'A standard for loop.', code: 'for (int i = 0; i < 10; ++i) {\n    // code here\n}' },
+    { title: 'While Loop', description: 'A standard while loop.', code: 'while (condition) {\n    // code here\n}' },
+    { title: 'If-Else', description: 'A conditional statement.', code: 'if (condition) {\n    // code here\n} else {\n    // code here\n}' },
+    { title: 'Function', description: 'A basic function definition.', code: 'void functionName() {\n    // code here\n}' },
+    { title: 'Class', description: 'A basic class definition.', code: 'class MyClass {\npublic:\n    MyClass() {}\n    ~MyClass() {}\n};' },
+    { title: 'Read Input (cin)', description: 'Read integer from stdin.', code: 'int num;\nstd::cin >> num;' },
+  ],
+  java: [
+    { title: 'For Loop', description: 'A standard for loop.', code: 'for (int i = 0; i < 10; i++) {\n    // code here\n}' },
+    { title: 'While Loop', description: 'A standard while loop.', code: 'while (condition) {\n    // code here\n}' },
+    { title: 'If-Else', description: 'A conditional statement.', code: 'if (condition) {\n    // code here\n} else {\n    // code here\n}' },
+    { title: 'Method', description: 'A basic method definition.', code: 'public void methodName() {\n    // code here\n}' },
+    { title: 'Class', description: 'A basic class definition.', code: 'class MyClass {\n    public MyClass() {\n        \n    }\n}' },
+    { title: 'Read Input (Scanner)', description: 'Read integer from stdin.', code: 'import java.util.Scanner;\n\nScanner scanner = new Scanner(System.in);\nint num = scanner.nextInt();' },
+  ],
+  javascript: [
+    { title: 'For Loop', description: 'A standard for loop.', code: 'for (let i = 0; i < 10; i++) {\n    // code here\n}' },
+    { title: 'While Loop', description: 'A standard while loop.', code: 'while (condition) {\n    // code here\n}' },
+    { title: 'If-Else', description: 'A conditional statement.', code: 'if (condition) {\n    // code here\n} else {\n    // code here\n}' },
+    { title: 'Function', description: 'A basic function definition.', code: 'function functionName() {\n    // code here\n}' },
+    { title: 'Arrow Function', description: 'An ES6 arrow function.', code: 'const functionName = () => {\n    // code here\n};' },
+    { title: 'Class', description: 'An ES6 class definition.', code: 'class MyClass {\n    constructor() {\n        \n    }\n}' },
+  ],
+  python: [
+    { title: 'For Loop', description: 'A standard for loop.', code: 'for i in range(10):\n    # code here\n    pass' },
+    { title: 'While Loop', description: 'A standard while loop.', code: 'while condition:\n    # code here\n    pass' },
+    { title: 'If-Else', description: 'A conditional statement.', code: 'if condition:\n    # code here\nelse:\n    # code here\n    pass' },
+    { title: 'Function', description: 'A basic function definition.', code: 'def function_name():\n    # code here\n    pass' },
+    { title: 'Class', description: 'A basic class definition.', code: 'class MyClass:\n    def __init__(self):\n        pass' },
+    { title: 'Read Input', description: 'Read a line from stdin.', code: 'data = input()' },
+  ],
 };
 
 export const INITIAL_USER: User = {
@@ -173,13 +215,78 @@ export const CPP_CHALLENGES: Challenge[] = [
         objective: 'This is a simple challenge to help you practice printing to stdout. You may also want to complete Solve Me First in C++ before attempting this challenge.\n\nWe\'re starting out by printing the most famous computing phrase of all time! In the editor below, use either `printf` or `cout` to print the string `Hello, World!` to stdout.\n\nThe more popular command form is `cout`. It has the following basic form:\n`cout<<value_to_print<<value_to_print;`\n\nAny number of values can be printed using one command as shown.\n\nThe `printf` command comes from C language. It accepts an optional format specification and a list of variables. Two examples for printing a string are:\n`printf("%s", string); printf(string);`\n\nNote that neither method adds a newline. It only prints what you tell it to.',
         outputFormat: 'Print `Hello, World!` to stdout.',
         sampleOutput: 'Hello, World!',
-        boilerplateCode: '#include <iostream>\n#include <cstdio>\n\nusing namespace std;\n\nint main() {\n    printf("Hello, World!");\n    return 0;\n}',
+        boilerplateCode: '#include <iostream>\n#include <cstdio>\n\nusing namespace std;\n\nint main() {\n    printf("Hello, World!");\n    return 0;\n}\n\n\n\n\n\n',
         testCases: [
             { id: '1', input: '', expectedOutput: 'Hello, World!', isLocked: true },
         ],
     },
-    { id: 2, title: 'Input and Output', difficulty: 'Easy', category: 'C++ (Basic)', maxScore: 5, successRate: '93.90%', description: 'Practice reading input and printing output.', isSolved: false },
-    { id: 3, title: 'Basic Data Types', difficulty: 'Easy', category: 'C++ (Basic)', maxScore: 10, successRate: '80.95%', description: 'Learn about C++ data types.', isSolved: false },
-    { id: 4, title: 'Conditional Statements', difficulty: 'Easy', category: 'C++ (Basic)', maxScore: 10, successRate: '96.73%', description: 'Use if-else statements to control flow.', isSolved: false },
-    { id: 5, title: 'For Loop', difficulty: 'Easy', category: 'C++ (Basic)', maxScore: 10, successRate: '94.92%', description: 'Practice with for loops.', isSolved: false },
+    { 
+        id: 2, 
+        title: 'Input and Output', 
+        difficulty: 'Easy', 
+        category: 'C++ (Basic)', 
+        maxScore: 5, 
+        successRate: '93.90%', 
+        description: 'Practice reading input and printing output.', 
+        isSolved: false,
+        objective: 'In this challenge, we practice reading input from stdin and printing output to stdout.\n\nYour task is to read 3 integers from stdin and print their sum to stdout.',
+        outputFormat: 'Print the sum of the three integers on a single line.',
+        sampleOutput: '10',
+        boilerplateCode: '#include <cmath>\n#include <cstdio>\n#include <vector>\n#include <iostream>\n#include <algorithm>\n\nusing namespace std;\n\n\nint main() {\n    /* Enter your code here. Read input from STDIN. Print output to STDOUT */   \n    return 0;\n}\n',
+        testCases: [
+            { id: '1', input: '1 2 7', expectedOutput: '10', isLocked: true }
+        ]
+    },
+    { 
+        id: 3, 
+        title: 'Basic Data Types', 
+        difficulty: 'Easy', 
+        category: 'C++ (Basic)', 
+        maxScore: 10, 
+        successRate: '80.95%', 
+        description: 'Learn about C++ data types.', 
+        isSolved: false,
+        objective: 'This challenge will help you learn about the basic data types in C++. Some of the most commonly used data types are `int`, `long`, `char`, `float`, and `double`.\n\nYour task is to read inputs of these data types from a single line, and then print each value on a new line.',
+        outputFormat: 'Print each element on a new line in the same order it was received as input. Note that the floating point numbers should be correct up to 3 and 9 decimal places respectively.',
+        sampleOutput: '3\n12345678912345\na\n3.142\n9876.543210987',
+        boilerplateCode: '#include <iostream>\n#include <cstdio>\n#include <iomanip>\n\nusing namespace std;\n\nint main() {\n    // Complete the code.\n    return 0;\n}\n',
+        testCases: [
+            { id: '1', input: '3 12345678912345 a 3.1415926535 9876.543210987', expectedOutput: '3\n12345678912345\na\n3.142\n9876.543210987', isLocked: true }
+        ]
+    },
+    { 
+        id: 4, 
+        title: 'Conditional Statements', 
+        difficulty: 'Easy', 
+        category: 'C++ (Basic)', 
+        maxScore: 10, 
+        successRate: '96.73%', 
+        description: 'Use if-else statements to control flow.', 
+        isSolved: false,
+        objective: 'Given a positive integer, `n`, this challenge will test your knowledge of `if-else` statements.\n\nIf `1 <= n <= 9`, then print the lowercase English word corresponding to the number (e.g., `one` for `1`, `two` for `2`, etc.).\nIf `n > 9`, print `Greater than 9`.',
+        outputFormat: 'Print the word corresponding to `n` or `Greater than 9`.',
+        sampleOutput: 'five',
+        boilerplateCode: '#include <iostream>\n\nusing namespace std;\n\nint main()\n{\n    int n;\n    cin >> n;\n\n    // Write Your Code Here\n\n    return 0;\n}\n',
+        testCases: [
+            { id: '1', input: '5', expectedOutput: 'five', isLocked: true },
+            { id: '2', input: '44', expectedOutput: 'Greater than 9', isLocked: true }
+        ]
+    },
+    { 
+        id: 5, 
+        title: 'For Loop', 
+        difficulty: 'Easy', 
+        category: 'C++ (Basic)', 
+        maxScore: 10, 
+        successRate: '94.92%', 
+        description: 'Practice with for loops.', 
+        isSolved: false,
+        objective: 'A `for` loop is a programming language statement which allows code to be repeatedly executed.\n\nFor each integer `n` in the interval `[a, b]` (inclusive):\n- If `1 <= n <= 9`, then print the English representation of it in lowercase.\n- If `n > 9` and it is an even number, then print `even`.\n- If `n > 9` and it is an odd number, then print `odd`.',
+        outputFormat: 'Print the appropriate word representation of `n` on a new line.',
+        sampleOutput: 'eight\nnine\neven\nodd',
+        boilerplateCode: '#include <iostream>\n#include <cstdio>\n\nusing namespace std;\n\nint main() {\n    // Complete the code.\n    return 0;\n}\n',
+        testCases: [
+            { id: '1', input: '8 11', expectedOutput: 'eight\nnine\neven\nodd', isLocked: true }
+        ]
+    },
 ];
