@@ -1,6 +1,7 @@
 
 
 
+
 import { GoogleGenAI, Type } from "@google/genai";
 // Fix: Use 'import type' for type-only imports and combine them.
 import type { Language, SimulationOutput, VirtualFile, TestCase } from '../types';
@@ -239,4 +240,78 @@ export async function getAiFailureAnalysis(
         console.error("Error getting AI failure analysis:", error);
         return "Sorry, I couldn't analyze this test case failure. Please try again.";
     }
+}
+
+interface CodeCompletionResponse {
+    suggestions: string[];
+}
+
+const completionResponseSchema = {
+    type: Type.OBJECT,
+    properties: {
+        suggestions: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+            description: "A list of code completion suggestions as strings."
+        }
+    },
+    required: ["suggestions"]
+};
+
+export async function getAiCodeCompletion(
+  language: Language,
+  code: string,
+  cursorPosition: number
+): Promise<string[]> {
+  const codeBeforeCursor = code.substring(0, cursorPosition);
+  const codeAfterCursor = code.substring(cursorPosition);
+
+  const lineBeforeCursor = codeBeforeCursor.substring(codeBeforeCursor.lastIndexOf('\n') + 1);
+  if (lineBeforeCursor.trim() === '' && codeAfterCursor.trim() === '') {
+      return [];
+  }
+
+  const prompt = `
+    You are an expert AI programming assistant specializing in code completion.
+    Your task is to provide relevant, concise code completion suggestions based on the user's current code and cursor position.
+
+    Language: ${language}
+
+    Code before cursor:
+    \`\`\`${language}
+    ${codeBeforeCursor}
+    \`\`\`
+
+    Code after cursor:
+    \`\`\`${language}
+    ${codeAfterCursor}
+    \`\`\`
+
+    **Instructions:**
+    1.  Analyze the code context (variables, functions, scope, syntax).
+    2.  Provide a list of up to 5 most likely code completion suggestions.
+    3.  The suggestions should be what the user might type *next*, starting from the cursor position.
+    4.  Do not repeat the code that is already before the cursor. For example, if the code is \`console.\`, a good suggestion is \`log\`, not \`console.log\`.
+    5.  Respond with a single, valid JSON object that strictly adheres to the schema.
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: completionResponseSchema,
+        temperature: 0.2, 
+      },
+    });
+
+    const jsonText = response.text.trim();
+    const result = JSON.parse(jsonText) as CodeCompletionResponse;
+    
+    return result.suggestions || [];
+  } catch (error) {
+    console.error("Error getting AI code completion:", error);
+    return []; 
+  }
 }

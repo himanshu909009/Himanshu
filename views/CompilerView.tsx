@@ -1,10 +1,12 @@
 
 
+
 import React, { useState, useCallback } from 'react';
 import { CodeEditor } from '../components/CodeEditor';
 import { OutputDisplay } from '../components/OutputDisplay';
 import { AiAgent } from '../components/AiAgent';
 import { LanguageSelector } from '../components/LanguageSelector';
+import { ThemeSelector } from '../components/ThemeSelector';
 import { LANGUAGES, DEFAULT_CODE } from '../constants';
 import { runCodeSimulation, getAiErrorExplanation } from '../services/geminiService';
 import type { Language, SimulationOutput, ThemeName, VirtualFile } from '../types';
@@ -61,10 +63,6 @@ export function CompilerView() {
         setErrorLine(null);
         setErrorColumn(null);
         setAiExplanation(null);
-    };
-
-    const toggleTheme = () => {
-        setTheme(current => current === 'dark' ? 'light' : 'dark');
     };
 
     const handleClearOutput = () => {
@@ -177,14 +175,12 @@ export function CompilerView() {
                                     onLanguageChange={handleLanguageChange}
                                 />
                             </div>
-                            <div className="flex items-center gap-2">
-                                <ControlButton onClick={toggleTheme} title={theme === 'dark' ? "Switch to Light Theme" : "Switch to Dark Theme"}>
-                                    {theme === 'dark' ? (
-                                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-                                    ) : (
-                                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-                                    )}
-                                </ControlButton>
+                            <div className="flex items-center gap-4">
+                                <ThemeSelector
+                                    themes={{ dark: THEMES.dark, light: THEMES.light }}
+                                    selectedTheme={theme}
+                                    onThemeChange={setTheme}
+                                />
                                 <ControlButton onClick={() => setIsTemplateModalOpen(true)} title="Select a template">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V4zm2 0v12h6V4H7zm2 2h2a1 1 0 110 2H9a1 1 0 110-2zm0 4h2a1 1 0 110 2H9a1 1 0 110-2z" /></svg>
                                 </ControlButton>

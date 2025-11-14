@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react';
+import { getAiCodeCompletion } from '../services/geminiService';
 import type { Language, Theme, ThemeName } from '../types';
 
 interface CodeEditorProps {
@@ -20,6 +21,22 @@ const themeMap: Record<ThemeName, string> = {
   solarized: 'solarized',
   monokai: 'monokai',
 };
+
+// Simple debounce utility
+function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+
+    const debounced = (...args: Parameters<F>) => {
+        if (timeout !== null) {
+            clearTimeout(timeout);
+            timeout = null;
+        }
+        timeout = setTimeout(() => func(...args), waitFor);
+    };
+
+    return debounced as (...args: Parameters<F>) => void;
+}
+
 
 // Helper hook to calculate foldable ranges
 const useFoldableRanges = (code: string, language: Language) => {
@@ -112,6 +129,12 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
   // Code Folding State
   const [foldedLines, setFoldedLines] = useState<Set<number>>(new Set());
   const foldableRanges = useFoldableRanges(code, language);
+
+  // AI Code Completion State
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isSuggestionsVisible, setIsSuggestionsVisible] = useState(false);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
+  const [suggestionPosition, setSuggestionPosition] = useState({ top: 0, left: 0 });
 
   const { displayCode, displayLineNumbers, originalToDisplayMap, displayToOriginalMap } = useMemo(() => {
         const originalLines = code.split('\n');
@@ -214,6 +237,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
   }, [theme]);
 
   const handleCodeChange = (newDisplayCode: string) => {
+      setIsSuggestionsVisible(false);
       const oldDisplayLines = displayCode.split('\n');
       const newDisplayLines = newDisplayCode.split('\n');
 
@@ -278,7 +302,101 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
     setIsTooltipVisible(false);
   };
   
+   const handleAcceptSuggestion = (suggestion: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+
+    const newText = displayCode.substring(0, start) + suggestion + displayCode.substring(end);
+    handleCodeChange(newText);
+    
+    setIsSuggestionsVisible(false);
+
+    setTimeout(() => {
+        if (textareaRef.current) {
+            const newCursorPos = start + suggestion.length;
+            textareaRef.current.selectionStart = newCursorPos;
+            textareaRef.current.selectionEnd = newCursorPos;
+            textareaRef.current.focus();
+        }
+    }, 0);
+  };
+
+  const fetchSuggestions = useCallback(async (currentCode: string, position: number) => {
+      const charBefore = currentCode[position - 1];
+      const lineBeforeCursor = currentCode.substring(0, position).substring(currentCode.lastIndexOf('\n', position -1) + 1);
+      
+      if (!charBefore || (lineBeforeCursor.trim() === '' && !charBefore.match(/[.({[]/))) {
+          setIsSuggestionsVisible(false);
+          return;
+      }
+      
+      try {
+          const result = await getAiCodeCompletion(language, currentCode, position);
+          if (result && result.length > 0) {
+              setSuggestions(result);
+              setActiveSuggestionIndex(0);
+
+              const textarea = textareaRef.current;
+              if (textarea) {
+                  const lines = currentCode.substring(0, position).split('\n');
+                  const lineIndex = lines.length - 1;
+                  const colIndex = lines[lineIndex].length;
+
+                  const top = padding.top + (lineIndex * lineHeight) + lineHeight;
+                  const left = padding.left + colIndex * charWidth;
+                  
+                  setSuggestionPosition({ top, left });
+                  setIsSuggestionsVisible(true);
+              }
+          } else {
+              setIsSuggestionsVisible(false);
+          }
+      } catch (error) {
+          console.error("Failed to fetch suggestions:", error);
+          setIsSuggestionsVisible(false);
+      }
+  }, [language, charWidth, lineHeight, padding]);
+
+  const debouncedFetchSuggestions = useCallback(debounce(fetchSuggestions, 500), [fetchSuggestions]);
+
+  const handleCursorActivity = () => {
+    if (textareaRef.current) {
+        const position = textareaRef.current.selectionStart;
+        if (textareaRef.current.selectionStart !== textareaRef.current.selectionEnd) {
+             setIsSuggestionsVisible(false);
+             return;
+        }
+        debouncedFetchSuggestions(displayCode, position);
+    }
+  };
+
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (isSuggestionsVisible) {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setActiveSuggestionIndex(prev => (prev + 1) % suggestions.length);
+            return;
+        }
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setActiveSuggestionIndex(prev => (prev - 1 + suggestions.length) % suggestions.length);
+            return;
+        }
+        if (e.key === 'Enter' || e.key === 'Tab') {
+            e.preventDefault();
+            handleAcceptSuggestion(suggestions[activeSuggestionIndex]);
+            return;
+        }
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            setIsSuggestionsVisible(false);
+            return;
+        }
+    }
     const BRACKET_PAIRS: Record<string, string> = { '(': ')', '[': ']', '{': '}', '"': '"', "'": "'", '`': '`' };
     const textarea = e.currentTarget;
     const { selectionStart, selectionEnd, value } = textarea;
@@ -493,6 +611,9 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
               onChange={(e) => handleCodeChange(e.target.value)}
               onScroll={handleScroll}
               onKeyDown={handleKeyDown}
+              onKeyUp={handleCursorActivity}
+              onSelect={handleCursorActivity}
+              onClick={handleCursorActivity}
               className={`${commonEditorClasses} p-4 bg-transparent text-transparent ${theme.caret} relative z-10 overflow-auto`}
               style={{lineHeight: '1.5rem'}}
               spellCheck="false"
@@ -511,6 +632,29 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
                         className={`text-gray-300 text-base leading-relaxed max-w-none whitespace-pre-wrap`}
                         dangerouslySetInnerHTML={{ __html: aiExplanation.replace(/\`\`\`(\w+)?\n([\s\S]+?)\n\`\`\`/g, '<pre class="bg-gray-800 p-2 my-2 rounded-md font-mono text-sm block whitespace-pre overflow-x-auto"><code>$2</code></pre>') }}
                     />
+                </div>
+            )}
+             {isSuggestionsVisible && (
+                <div
+                    className="absolute z-30 bg-gray-800 border border-gray-700 rounded-md shadow-lg min-w-[200px]"
+                    style={{ top: `${suggestionPosition.top}px`, left: `${suggestionPosition.left}px` }}
+                >
+                    <ul className="py-1">
+                        {suggestions.map((suggestion, index) => (
+                            <li
+                                key={index}
+                                className={`px-3 py-1 text-sm font-mono cursor-pointer ${
+                                    index === activeSuggestionIndex
+                                        ? 'bg-blue-600 text-white'
+                                        : 'text-gray-300 hover:bg-gray-700'
+                                }`}
+                                onClick={() => handleAcceptSuggestion(suggestion)}
+                                onMouseEnter={() => setActiveSuggestionIndex(index)}
+                            >
+                                {suggestion}
+                            </li>
+                        ))}
+                    </ul>
                 </div>
             )}
           </div>

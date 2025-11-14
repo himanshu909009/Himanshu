@@ -19,7 +19,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
         id="theme-select"
         value={selectedTheme}
         onChange={(e) => onThemeChange(e.target.value as ThemeName)}
-        className="bg-gray-800 border border-gray-700 text-white rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+        className="bg-gray-800 border border-gray-700 text-white rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-base"
         aria-label="Select Editor Theme"
       >
         {/* Fix: Explicitly type the 'theme' parameter to resolve 'unknown' type error. */}
