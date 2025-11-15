@@ -1,9 +1,10 @@
+
 import React, { useState, useCallback } from 'react';
 import { ProblemDescription } from '../components/ProblemDescription';
 import { CodeEditor } from '../components/CodeEditor';
 import { OutputDisplay } from '../components/OutputDisplay';
 import { THEMES } from '../themes';
-import type { Challenge, SimulationOutput, VirtualFile, Language, TestResult } from '../types';
+import type { Challenge, SimulationOutput, VirtualFile, Language, TestResult, User, RecentActivityItem, TestCase } from '../types';
 import { runCodeSimulation, getAiFailureAnalysis, getAiErrorExplanation } from '../services/geminiService';
 import { AiAgent } from '../components/AiAgent';
 import { LanguageSelector } from '../components/LanguageSelector';
@@ -12,6 +13,8 @@ import { TemplateSelectorModal } from '../components/TemplateSelectorModal';
 
 interface ChallengeEditorViewProps {
     challenge: Challenge;
+    user: User;
+    onUserUpdate: (user: User) => void;
     onBack: () => void;
 }
 
@@ -26,7 +29,7 @@ const getFileName = (language: Language) => {
     }
 };
 
-export function ChallengeEditorView({ challenge, onBack }: ChallengeEditorViewProps) {
+export function ChallengeEditorView({ challenge, user, onUserUpdate, onBack }: ChallengeEditorViewProps) {
     const [language, setLanguage] = useState<Language>('cpp');
     const [code, setCode] = useState(challenge.boilerplateCode || '');
     const theme = THEMES['dark'];
@@ -136,7 +139,6 @@ export function ChallengeEditorView({ challenge, onBack }: ChallengeEditorViewPr
         setAiExplanation(null);
         
         const results: TestResult[] = [];
-        let firstFailedResult: TestResult | null = null;
         
         const compilationCheck = await runSingleSimulation("");
         if (compilationCheck.compilation.status === 'error') {
@@ -157,60 +159,93 @@ export function ChallengeEditorView({ challenge, onBack }: ChallengeEditorViewPr
             return;
         }
 
-        for (const testCase of challenge.testCases || []) {
-            try {
-                const result = await runSingleSimulation(testCase.input);
-                
-                let status: TestResult['status'] = 'fail';
-                let errorMessage: string | undefined;
-
-                if (result.output.stderr) {
-                    status = 'error';
-                    errorMessage = result.output.stderr;
-                } else if (result.output.stdout.trim() === testCase.expectedOutput.trim()) {
-                    status = 'pass';
-                }
-
-                const testResult: TestResult = {
-                    testCase,
-                    status,
-                    actualOutput: result.output.stdout,
-                    errorMessage,
-                };
-
-                results.push(testResult);
-
-                if (status !== 'pass' && !firstFailedResult) {
-                    firstFailedResult = testResult;
-                }
-            } catch (e) {
-                const errorMessage = e instanceof Error ? e.message : "An unknown error occurred during test case execution.";
-                const errorResult = {
-                    testCase,
-                    status: 'error' as const,
-                    actualOutput: '',
-                    errorMessage: errorMessage,
-                };
-                results.push(errorResult);
-                if (!firstFailedResult) {
-                    firstFailedResult = errorResult;
-                }
+        const sampleTestCase: TestCase = {
+            id: 'sample-0',
+            input: challenge.sampleInput ?? '',
+            expectedOutput: challenge.sampleOutput ?? '',
+            isLocked: true, // Treat as official to trigger summary view
+        };
+    
+        let testResult: TestResult | null = null;
+    
+        try {
+            const result = await runSingleSimulation(sampleTestCase.input);
+            
+            let status: TestResult['status'] = 'fail';
+            let errorMessage: string | undefined;
+    
+            if (result.output.stderr) {
+                status = 'error';
+                errorMessage = result.output.stderr;
+            } else if (result.output.stdout.trim() === sampleTestCase.expectedOutput.trim()) {
+                status = 'pass';
             }
+    
+            testResult = {
+                testCase: sampleTestCase,
+                status,
+                actualOutput: result.output.stdout,
+                errorMessage,
+            };
+            results.push(testResult);
+            
+        } catch (e) {
+            const errorMessage = e instanceof Error ? e.message : "An unknown error occurred during test case execution.";
+            testResult = {
+                testCase: sampleTestCase,
+                status: 'error' as const,
+                actualOutput: '',
+                errorMessage: errorMessage,
+            };
+            results.push(testResult);
         }
-
+    
+        // Update user submissions
+        if (testResult) {
+            let submissionStatus: RecentActivityItem['status'];
+            switch(testResult.status) {
+                case 'pass':
+                    submissionStatus = 'Accepted';
+                    break;
+                case 'fail':
+                    submissionStatus = 'Wrong Answer';
+                    break;
+                case 'error':
+                    submissionStatus = 'Time Limit Exceeded'; // This is an assumption. It could be other runtime errors.
+                    break;
+            }
+            
+            const newSubmission: RecentActivityItem = {
+                id: Date.now(),
+                challengeId: challenge.id,
+                title: challenge.title,
+                status: submissionStatus,
+                timestamp: new Date().toISOString(),
+            };
+    
+            // Remove previous submission for this challenge and add the new one to the top
+            const otherSubmissions = user.submissions.filter(s => s.challengeId !== challenge.id);
+            
+            const updatedUser: User = {
+                ...user,
+                submissions: [newSubmission, ...otherSubmissions],
+            };
+            onUserUpdate(updatedUser);
+        }
+    
         setTestResults(results);
-
-        if (firstFailedResult) {
+    
+        if (testResult && testResult.status !== 'pass') {
             setIsAiLoading(true);
             try {
-                const isRuntimeError = firstFailedResult.status === 'error';
-                const actualOutput = isRuntimeError ? (firstFailedResult.errorMessage || '') : firstFailedResult.actualOutput;
-
+                const isRuntimeError = testResult.status === 'error';
+                const actualOutput = isRuntimeError ? (testResult.errorMessage || '') : testResult.actualOutput;
+    
                 const explanation = await getAiFailureAnalysis(
                     language, 
                     code, 
-                    firstFailedResult.testCase.input,
-                    firstFailedResult.testCase.expectedOutput,
+                    testResult.testCase.input,
+                    testResult.testCase.expectedOutput,
                     actualOutput,
                     isRuntimeError
                 );
@@ -222,10 +257,10 @@ export function ChallengeEditorView({ challenge, onBack }: ChallengeEditorViewPr
                 setIsAiLoading(false);
             }
         }
-
+    
         setIsTesting(false);
 
-    }, [language, code, challenge.testCases]);
+    }, [language, code, challenge.id, challenge.title, challenge.sampleInput, challenge.sampleOutput, user, onUserUpdate]);
     
     const handleTerminalSubmit = useCallback(async (newLine: string) => {
         if (isLoading) return;

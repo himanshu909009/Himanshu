@@ -43,10 +43,9 @@ const useFoldableRanges = (code: string, language: Language) => {
     return useMemo(() => {
         const ranges = new Map<number, number>();
         const lines = code.split('\n');
-        const stack: { char: string; line: number }[] = [];
-        const indentStack: { indent: number; line: number }[] = [];
-
+        
         if (language === 'python') {
+            const indentStack: { indent: number; line: number }[] = [];
             let lastIndent = -1;
             const effectiveLines: {indent: number, index: number}[] = [];
 
@@ -92,18 +91,64 @@ const useFoldableRanges = (code: string, language: Language) => {
                     }
                  }
             }
-
-
-        } else { // Brace-based languages
-            lines.forEach((line, i) => {
-                for (let j = 0; j < line.length; j++) {
-                    if (line[j] === '{') {
-                        stack.push({ char: '{', line: i + 1 });
-                    } else if (line[j] === '}') {
+        } else { // Refactored brace-based language logic
+            const stack: { char: string; line: number }[] = [];
+            let inMultiLineComment = false;
+        
+            lines.forEach((lineContent, i) => {
+                const line = i + 1;
+                let inString: false | '"' | "'" = false;
+                let inSingleLineComment = false;
+    
+                for (let j = 0; j < lineContent.length; j++) {
+                    const char = lineContent[j];
+                    const nextChar = j < lineContent.length - 1 ? lineContent[j + 1] : null;
+    
+                    // 1. Check for exiting a state
+                    if (inMultiLineComment) {
+                        if (char === '*' && nextChar === '/') {
+                            inMultiLineComment = false;
+                            j++; // Consume the '/' as well
+                        }
+                        continue;
+                    }
+                    if (inSingleLineComment) {
+                        // This state only ends at the end of the line, which the outer loop handles.
+                        break;
+                    }
+                    if (inString) {
+                        // Check for end of string, ignoring escaped quotes
+                        if (char === inString && lineContent[j - 1] !== '\\') {
+                            inString = false;
+                        }
+                        continue;
+                    }
+    
+                    // 2. Check for entering a state
+                    if (char === '/' && nextChar === '*') {
+                        inMultiLineComment = true;
+                        j++; // Skip the '*'
+                        continue;
+                    }
+                    if (char === '/' && nextChar === '/') {
+                        inSingleLineComment = true;
+                        // The rest of the line is a comment, so we can stop processing it.
+                        break;
+                    }
+                    if (char === '"' || char === "'") {
+                        inString = char;
+                        continue;
+                    }
+    
+                    // 3. Process braces if not in any special state
+                    if (char === '{') {
+                        stack.push({ char: '{', line: line });
+                    } else if (char === '}') {
                         if (stack.length > 0 && stack[stack.length - 1].char === '{') {
                             const start = stack.pop();
-                            if (start && start.line < i + 1) {
-                                ranges.set(start.line, i + 1);
+                            // Only create a fold range for multi-line blocks
+                            if (start && start.line < line) {
+                                ranges.set(start.line, line);
                             }
                         }
                     }

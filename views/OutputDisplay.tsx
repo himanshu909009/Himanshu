@@ -170,9 +170,14 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({ output, isLoading,
                         <p className="text-gray-300 text-lg">
                             Your submission has been processed.
                         </p>
-                        <p className="text-gray-400 mt-2">
-                            Passed {passCount} of {totalCount} test cases.
-                        </p>
+                        {totalCount > 0 && (
+                            <p className="text-gray-400 mt-2">
+                                {totalCount > 1
+                                    ? `Passed ${passCount} of ${totalCount} test cases.`
+                                    : allPassed ? `Passed sample test case.` : `Failed sample test case.`
+                                }
+                            </p>
+                        )}
                     </div>
                 );
             }

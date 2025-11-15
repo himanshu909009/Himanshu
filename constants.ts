@@ -706,9 +706,9 @@ export const CPP_CHALLENGES: Challenge[] = [
         inputFormat: 'A single line containing two space-separated integers, `a` and `b`.',
         outputFormat: 'Print the values of `a` and `b` after swapping, separated by a space.',
         constraints: '`-10^9 <= a, b <= 10^9`',
-        sampleInput: '10 20',
-        sampleOutput: '20 10',
-        testCases: [{ id: '1', input: '10 20', expectedOutput: '20 10', isLocked: true }],
+        sampleInput: '10 5',
+        sampleOutput: '5 10',
+        testCases: [{ id: '1', input: '10 5', expectedOutput: '5 10', isLocked: true }],
     },
     {
         id: 24,

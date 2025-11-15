@@ -1,7 +1,3 @@
-
-
-
-
 import { GoogleGenAI, Type } from "@google/genai";
 // Fix: Use 'import type' for type-only imports and combine them.
 import type { Language, SimulationOutput, VirtualFile, TestCase } from '../types';
@@ -79,7 +75,8 @@ export async function runCodeSimulation(
   }
 
   const prompt = `
-    You are a virtual code runner with a file system. Your task is to simulate the compilation and execution of the provided code. Act exactly like a real environment (e.g., GCC, Python interpreter).
+    You are a virtual code runner with a file system, acting as an automated judge for a programming platform. Your task is to simulate the compilation and execution of the provided code.
+    **Your entire response must be a single JSON object matching the provided schema. Do not output any text outside of the JSON object.**
 
     **Execution Context:**
     - The entrypoint for execution is the file named: "${activeFile.name}"
@@ -115,8 +112,15 @@ export async function runCodeSimulation(
         *   The order of the array elements must represent the chronological order of events. For example: \`[{type: "stdout", content: "Enter name: "}, {type: "stdin", content: "Alice\\n"}, ...]\`.
         *   Combine consecutive prints into a single \`stdout\` part. Each \`stdin\` part should correspond to a single read operation (e.g., one \`scanf\`).
         *   **Indicate Execution State:** In \`output.isExecutionFinished\`, you MUST set it to \`true\` if the program ran to completion or terminated with an error. Set it to \`false\` ONLY if the program is currently blocked and waiting for more standard input.
-        *   If the program finishes successfully, append a confirmation message like "\\n\\n=== Code Execution Successful ===" to the end of the stdout/transcript.
         *   **In the \`output.files\` array, return ONLY the files that were created or modified during execution.** Do not return unchanged files. If no files were changed, return an empty array or omit the field.
+
+    **Strict Output Formatting (Most Important Rule for Automated Judging):**
+    *   The \`output.stdout\` field is CRITICAL for automated judging. It must contain ONLY the program's result output.
+    *   **Exclude Input Prompts:** Programs often print prompts like "Enter your name: ". These prompts MUST BE EXCLUDED from the \`output.stdout\` field. The \`stdout\` field should only contain the actual data output, as if it were being graded by a machine.
+    *   **Keep Transcript Complete:** While prompts are excluded from \`stdout\`, they SHOULD be included in the \`output.transcript\` to show the full interaction chronologically.
+    *   **No Extra Text:** DO NOT add any conversational text, explanations, or status messages like "Program finished successfully." to the \`stdout\`.
+    *   **Example:** If code is \`cout << "Enter radius: "; cin >> r; cout << 3.14*r*r;\` and stdin is \`10\`, the \`stdout\` MUST be just \`"314"\`. The \`transcript\` would be \`[{type: "stdout", content: "Enter radius: "}, {type: "stdin", content: "10\\n"}, {type: "stdout", content: "314"}]\`.
+    *   **The content of \`stdout\` must be character-for-character identical to what an automated judge expects.** This is the most common reason for "Wrong Answer" failures.
   `;
 
   try {

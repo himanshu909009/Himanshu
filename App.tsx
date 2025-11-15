@@ -1,3 +1,4 @@
+
 // Fix: Implemented the main App component with view routing logic.
 import React, { useState } from 'react';
 import { Header } from './components/Header';
@@ -110,7 +111,12 @@ function App() {
       case 'challengeEditor':
         const challenge = CPP_CHALLENGES.find(c => c.id === selectedChallengeId);
         if (challenge) {
-            return <ChallengeEditorView challenge={challenge} onBack={() => handleNavigate('challengeList', selectedCourse)} />;
+            return <ChallengeEditorView 
+                        challenge={challenge} 
+                        user={user}
+                        onUserUpdate={handleUserUpdate}
+                        onBack={() => handleNavigate('challengeList', selectedCourse)} 
+                    />;
         }
         // Fallback if challenge not found
         return (

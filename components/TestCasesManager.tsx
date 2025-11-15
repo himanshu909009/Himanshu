@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import type { TestCase, Theme } from '../types';
 
 interface TestCasesManagerProps {
@@ -75,7 +76,7 @@ export const TestCasesManager: React.FC<TestCasesManagerProps> = ({ testCases, o
     };
 
     return (
-        <div className={`flex flex-col h-full ${theme.background} p-4 rounded-md border ${theme.border}`}>
+        <div className="flex flex-col h-full p-4">
             <div className="flex justify-between items-center mb-4 flex-shrink-0">
                 <p className="text-gray-400 text-sm">Define test cases to run your code against.</p>
                 <button
