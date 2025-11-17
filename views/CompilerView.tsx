@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback } from 'react';
 import { CodeEditor } from '../components/CodeEditor';
 import { OutputDisplay } from '../components/OutputDisplay';
@@ -34,7 +35,11 @@ const ControlButton: React.FC<{ children: React.ReactNode; onClick?: () => void;
 
 export function CompilerView() {
     const [language, setLanguage] = useState<Language>('c');
-    const [code, setCode] = useState<string>(DEFAULT_CODE.c);
+    const getStorageKey = (lang: Language) => `compiler-view-code-${lang}`;
+
+    const [code, setCode] = useState<string>(() => {
+        return localStorage.getItem(getStorageKey(language)) || DEFAULT_CODE[language];
+    });
     const [fullInput, setFullInput] = useState<string>("");
     const [output, setOutput] = useState<SimulationOutput | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -63,7 +68,7 @@ export function CompilerView() {
 
     const handleLanguageChange = (newLanguage: Language) => {
         setLanguage(newLanguage);
-        setCode(DEFAULT_CODE[newLanguage]);
+        setCode(localStorage.getItem(getStorageKey(newLanguage)) || DEFAULT_CODE[newLanguage]);
         setOutput(null);
         setError(null);
         setFullInput("");
@@ -248,6 +253,7 @@ export function CompilerView() {
                             errorColumn={errorColumn}
                             aiExplanation={aiExplanation}
                             language={language}
+                            storageKey={getStorageKey(language)}
                         />
                     </div>
 

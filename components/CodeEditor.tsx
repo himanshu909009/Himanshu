@@ -1,5 +1,5 @@
+
 import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react';
-import { getAiCodeCompletion } from '../services/geminiService';
 import type { Language, Theme, ThemeName } from '../types';
 
 interface CodeEditorProps {
@@ -11,6 +11,7 @@ interface CodeEditorProps {
   errorColumn: number | null;
   aiExplanation?: string | null;
   snippetToInsert?: { code: string; timestamp: number } | null;
+  storageKey?: string;
 }
 
 declare var Prism: any;
@@ -22,117 +23,105 @@ const themeMap: Record<ThemeName, string> = {
   monokai: 'monokai',
 };
 
-// Simple debounce utility
-function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
-    let timeout: ReturnType<typeof setTimeout> | null = null;
-
-    const debounced = (...args: Parameters<F>) => {
-        if (timeout !== null) {
-            clearTimeout(timeout);
-            timeout = null;
-        }
-        timeout = setTimeout(() => func(...args), waitFor);
-    };
-
-    return debounced as (...args: Parameters<F>) => void;
-}
+const sanitizeCode = (input: string): string => {
+  // Removes non-printable control characters except for tab (\t), newline (\n), and carriage return (\r).
+  const sanitized = input.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '');
+  // Normalize all line endings to LF (\n) for consistency.
+  return sanitized.replace(/\r\n?/g, '\n');
+};
 
 
-// Helper hook to calculate foldable ranges
+// Helper hook to calculate foldable ranges for code blocks.
 const useFoldableRanges = (code: string, language: Language) => {
     return useMemo(() => {
-        const ranges = new Map<number, number>();
+        const ranges = new Map<number, number>(); // Map from start line (1-based) to end line (1-based)
         const lines = code.split('\n');
         
         if (language === 'python') {
-            const indentStack: { indent: number; line: number }[] = [];
-            let lastIndent = -1;
-            const effectiveLines: {indent: number, index: number}[] = [];
+            const indentStack: { indent: number, line: number }[] = [];
+            const effectiveLines: { indent: number, index: number, originalLine: string }[] = [];
 
             lines.forEach((line, i) => {
-                if (line.trim().length > 0) {
+                const trimmedLine = line.trim();
+                // Consider lines that are not empty or just comments
+                if (trimmedLine.length > 0 && !trimmedLine.startsWith('#')) {
                     const indentMatch = line.match(/^\s*/);
-                    const currentIndent = indentMatch ? indentMatch[0].length : 0;
-                    effectiveLines.push({ indent: currentIndent, index: i });
+                    effectiveLines.push({
+                        indent: indentMatch ? indentMatch[0].length : 0,
+                        index: i,
+                        originalLine: line
+                    });
                 }
             });
+            
+            indentStack.push({ indent: -1, line: -1 }); // Base indent
 
-            effectiveLines.forEach(({ indent, index }, i) => {
-                if (indent > lastIndent) {
-                    indentStack.push({ indent: lastIndent, line: index });
-                } else if (indent < lastIndent) {
-                     while (indentStack.length > 0 && indent <= indentStack[indentStack.length - 1].indent) {
-                        const start = indentStack.pop();
-                        if (start) {
-                            let endLine = -1;
-                            for (let j = i; j < effectiveLines.length; j++) {
-                                if (effectiveLines[j].indent <= start.indent) {
-                                    endLine = effectiveLines[j-1].index;
-                                    break;
-                                }
-                            }
-                            if (endLine === -1) {
-                                endLine = effectiveLines[effectiveLines.length - 1].index;
-                            }
-                            if (endLine > start.line) {
-                                ranges.set(start.line + 1, endLine + 1);
-                            }
+            for (let i = 0; i < effectiveLines.length; i++) {
+                const { indent: currentIndent, index: currentLineIndex, originalLine } = effectiveLines[i];
+                let lastIndent = indentStack[indentStack.length - 1].indent;
+
+                if (currentIndent > lastIndent) {
+                    // A new, more indented block has started. The line before it is the start of the range.
+                    if (i > 0) {
+                       indentStack.push({ indent: currentIndent, line: effectiveLines[i - 1].index });
+                    }
+                }
+                
+                while (currentIndent < indentStack[indentStack.length - 1].indent) {
+                     // The block has ended. Pop from stack and record the range.
+                    const startBlock = indentStack.pop();
+                    if (startBlock) {
+                        const endLine = effectiveLines[i - 1].index;
+                        if (endLine > startBlock.line) {
+                           ranges.set(startBlock.line + 1, endLine + 1);
                         }
                     }
                 }
-                lastIndent = indent;
-            });
-             while (indentStack.length > 0) {
-                 const start = indentStack.pop();
-                 if (start) {
-                    const endLine = effectiveLines[effectiveLines.length - 1].index;
-                    if (endLine > start.line) {
-                        ranges.set(start.line + 1, endLine + 1);
-                    }
-                 }
             }
-        } else { // Refactored brace-based language logic
-            const stack: { char: string; line: number }[] = [];
+             while (indentStack.length > 1) { // Clear any remaining blocks
+                const startBlock = indentStack.pop();
+                if (startBlock && effectiveLines.length > 0) {
+                   const endLine = effectiveLines[effectiveLines.length - 1].index;
+                   if (endLine > startBlock.line) {
+                       ranges.set(startBlock.line + 1, endLine + 1);
+                   }
+                }
+            }
+        } else { // Brace-based languages (C++, Java, JS, C)
+            const stack: number[] = []; // Stack of starting line numbers for '{'
             let inMultiLineComment = false;
         
             lines.forEach((lineContent, i) => {
-                const line = i + 1;
+                const lineNum = i + 1;
                 let inString: false | '"' | "'" = false;
                 let inSingleLineComment = false;
     
                 for (let j = 0; j < lineContent.length; j++) {
                     const char = lineContent[j];
+                    const prevChar = j > 0 ? lineContent[j - 1] : null;
                     const nextChar = j < lineContent.length - 1 ? lineContent[j + 1] : null;
     
-                    // 1. Check for exiting a state
                     if (inMultiLineComment) {
                         if (char === '*' && nextChar === '/') {
                             inMultiLineComment = false;
-                            j++; // Consume the '/' as well
+                            j++;
                         }
                         continue;
                     }
-                    if (inSingleLineComment) {
-                        // This state only ends at the end of the line, which the outer loop handles.
-                        break;
-                    }
+                    if (inSingleLineComment) break;
+                    
                     if (inString) {
-                        // Check for end of string, ignoring escaped quotes
-                        if (char === inString && lineContent[j - 1] !== '\\') {
-                            inString = false;
-                        }
+                        if (char === inString && prevChar !== '\\') inString = false;
                         continue;
                     }
     
-                    // 2. Check for entering a state
                     if (char === '/' && nextChar === '*') {
                         inMultiLineComment = true;
-                        j++; // Skip the '*'
+                        j++;
                         continue;
                     }
                     if (char === '/' && nextChar === '/') {
                         inSingleLineComment = true;
-                        // The rest of the line is a comment, so we can stop processing it.
                         break;
                     }
                     if (char === '"' || char === "'") {
@@ -140,15 +129,13 @@ const useFoldableRanges = (code: string, language: Language) => {
                         continue;
                     }
     
-                    // 3. Process braces if not in any special state
                     if (char === '{') {
-                        stack.push({ char: '{', line: line });
+                        stack.push(lineNum);
                     } else if (char === '}') {
-                        if (stack.length > 0 && stack[stack.length - 1].char === '{') {
-                            const start = stack.pop();
-                            // Only create a fold range for multi-line blocks
-                            if (start && start.line < line) {
-                                ranges.set(start.line, line);
+                        if (stack.length > 0) {
+                            const startLine = stack.pop()!;
+                            if (startLine < lineNum) {
+                                ranges.set(startLine, lineNum);
                             }
                         }
                     }
@@ -160,7 +147,7 @@ const useFoldableRanges = (code: string, language: Language) => {
 };
 
 
-export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, theme, language, errorLine, errorColumn, aiExplanation, snippetToInsert }) => {
+export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, theme, language, errorLine, errorColumn, aiExplanation, snippetToInsert, storageKey }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
@@ -175,38 +162,37 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
   const [foldedLines, setFoldedLines] = useState<Set<number>>(new Set());
   const foldableRanges = useFoldableRanges(code, language);
 
-  // AI Code Completion State
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [isSuggestionsVisible, setIsSuggestionsVisible] = useState(false);
-  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
-  const [suggestionPosition, setSuggestionPosition] = useState({ top: 0, left: 0 });
+  // Visual Cursor State
+  const [cursorPosition, setCursorPosition] = useState({ top: 0, left: 0 });
+  const [isFocused, setIsFocused] = useState(false);
 
+  // This hook generates the code visible in the editor by replacing folded sections with placeholders.
+  // It also creates mappings between original and visible line numbers for accurate editing and error highlighting.
   const { displayCode, displayLineNumbers, originalToDisplayMap, displayToOriginalMap } = useMemo(() => {
         const originalLines = code.split('\n');
         const displayLines: string[] = [];
-        const lineNumbers: (number | string)[] = [];
-        const otdMap: number[] = [];
-        const dtoMap: number[] = [];
+        const lineNumbers: number[] = [];
+        const otdMap: number[] = []; // Maps original line index to display line index
+        const dtoMap: number[] = []; // Maps display line index to original line index
 
-        let currentLine = 1;
-        while (currentLine <= originalLines.length) {
-            otdMap[currentLine - 1] = displayLines.length;
+        let originalLineIndex = 0;
+        while (originalLineIndex < originalLines.length) {
+            const currentLineNum = originalLineIndex + 1;
+            otdMap[originalLineIndex] = displayLines.length;
+            dtoMap[displayLines.length] = originalLineIndex;
             
-            const isFolded = foldedLines.has(currentLine);
-            const endLine = foldableRanges.get(currentLine);
+            const endFoldLineNum = foldableRanges.get(currentLineNum);
             
-            if (isFolded && endLine) {
-                 dtoMap[displayLines.length] = currentLine - 1;
-                 const lineContent = originalLines[currentLine - 1];
+            if (foldedLines.has(currentLineNum) && endFoldLineNum) {
+                 const lineContent = originalLines[originalLineIndex];
                  const indent = lineContent.match(/^\s*/)?.[0] || '';
-                 displayLines.push(indent + '{...}');
-                 lineNumbers.push(currentLine);
-                 currentLine = endLine + 1;
+                 displayLines.push(indent + (language === 'python' ? '...' : '{...}'));
+                 lineNumbers.push(currentLineNum);
+                 originalLineIndex = endFoldLineNum; // Jump to the line after the fold
             } else {
-                 dtoMap[displayLines.length] = currentLine - 1;
-                 displayLines.push(originalLines[currentLine - 1]);
-                 lineNumbers.push(currentLine);
-                 currentLine++;
+                 displayLines.push(originalLines[originalLineIndex]);
+                 lineNumbers.push(currentLineNum);
+                 originalLineIndex++;
             }
         }
         return {
@@ -215,7 +201,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
             originalToDisplayMap: otdMap,
             displayToOriginalMap: dtoMap,
         };
-    }, [code, foldedLines, foldableRanges]);
+    }, [code, foldedLines, foldableRanges, language]);
 
   useEffect(() => {
     if (snippetToInsert && textareaRef.current) {
@@ -226,8 +212,6 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
       const end = textarea.selectionEnd;
       
       const newText = currentValue.substring(0, start) + snippetCode + currentValue.substring(end);
-      // Since the textarea is now controlled by displayCode, we need to handle the update carefully
-      // This simple insertion might not work correctly with folding. For now, we assume it does.
       handleCodeChange(newText);
       
       setTimeout(() => {
@@ -245,7 +229,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
     if (typeof Prism !== 'undefined' && preRef.current) {
         Prism.highlightAllUnder(preRef.current);
     }
-  }, [displayCode, theme]);
+  }, [displayCode, theme, language]);
   
   useEffect(() => {
       const targetThemeTitle = themeMap[theme.name];
@@ -281,16 +265,24 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
     }
   }, [theme]);
 
+  useEffect(() => {
+    if (storageKey) {
+      const timer = setTimeout(() => {
+        localStorage.setItem(storageKey, code);
+      }, 1000); // Auto-save after 1 second of inactivity
+
+      return () => clearTimeout(timer);
+    }
+  }, [code, storageKey]);
+
+  // This handler translates changes made in the folded 'display' view back to the original source code.
   const handleCodeChange = (newDisplayCode: string) => {
-      setIsSuggestionsVisible(false);
       const oldDisplayLines = displayCode.split('\n');
       const newDisplayLines = newDisplayCode.split('\n');
-
-      let firstDiff = -1;
-      let lastDiffOld = -1;
-      let lastDiffNew = -1;
-
+      
+      let firstDiff = -1, lastDiffOld = -1, lastDiffNew = -1;
       const len = Math.max(oldDisplayLines.length, newDisplayLines.length);
+
       for (let i = 0; i < len; i++) {
         if (oldDisplayLines[i] !== newDisplayLines[i]) {
           if (firstDiff === -1) firstDiff = i;
@@ -300,22 +292,27 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
       }
       
       if (oldDisplayLines.length !== newDisplayLines.length) {
-         lastDiffOld = oldDisplayLines.length - 1;
-         lastDiffNew = newDisplayLines.length - 1;
+         lastDiffOld = Math.max(lastDiffOld, oldDisplayLines.length - 1);
+         lastDiffNew = Math.max(lastDiffNew, newDisplayLines.length - 1);
       }
-
-      if (firstDiff === -1) return; // No change
-
-      const startOriginalLine = displayToOriginalMap[firstDiff];
-      if (startOriginalLine === undefined) return;
-
-      const endOriginalLine = displayToOriginalMap[lastDiffOld] ?? startOriginalLine;
-      const originalLines = code.split('\n');
-      const replacementLines = newDisplayLines.slice(firstDiff, lastDiffNew + 1);
-
-      originalLines.splice(startOriginalLine, endOriginalLine - startOriginalLine + 1, ...replacementLines);
       
-      onCodeChange(originalLines.join('\n'));
+      if (firstDiff === -1) return; // No change detected
+
+      const startOriginalLineIndex = displayToOriginalMap[firstDiff];
+      if (startOriginalLineIndex === undefined) return;
+      const endOriginalLineIndex = displayToOriginalMap[lastDiffOld] ?? startOriginalLineIndex;
+
+      const replacementLines = newDisplayLines.slice(firstDiff, lastDiffNew + 1);
+      const originalLines = code.split('\n');
+      
+      originalLines.splice(startOriginalLineIndex, endOriginalLineIndex - startOriginalLineIndex + 1, ...replacementLines);
+      
+      const newOriginalCode = originalLines.join('\n');
+      const sanitizedCode = sanitizeCode(newOriginalCode);
+      
+      if (code !== sanitizedCode) {
+          onCodeChange(sanitizedCode);
+      }
   };
 
   const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
@@ -336,8 +333,8 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
     if (editorContainer) {
         const containerRect = editorContainer.getBoundingClientRect();
         setTooltipPosition({
-            top: divRect.bottom - containerRect.top,
-            left: divRect.left - containerRect.top,
+            top: divRect.bottom - containerRect.top + 8, // Position below the error line
+            left: divRect.left - containerRect.left
         });
         setIsTooltipVisible(true);
     }
@@ -347,362 +344,197 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ code, onCodeChange, them
     setIsTooltipVisible(false);
   };
   
-   const handleAcceptSuggestion = (suggestion: string) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-
-    const newText = displayCode.substring(0, start) + suggestion + displayCode.substring(end);
-    handleCodeChange(newText);
-    
-    setIsSuggestionsVisible(false);
-
-    setTimeout(() => {
-        if (textareaRef.current) {
-            const newCursorPos = start + suggestion.length;
-            textareaRef.current.selectionStart = newCursorPos;
-            textareaRef.current.selectionEnd = newCursorPos;
-            textareaRef.current.focus();
-        }
-    }, 0);
-  };
-
-  const fetchSuggestions = useCallback(async (currentCode: string, position: number) => {
-      const charBefore = currentCode[position - 1];
-      const lineBeforeCursor = currentCode.substring(0, position).substring(currentCode.lastIndexOf('\n', position -1) + 1);
-      
-      if (!charBefore || (lineBeforeCursor.trim() === '' && !charBefore.match(/[.({[]/))) {
-          setIsSuggestionsVisible(false);
-          return;
-      }
-      
-      try {
-          const result = await getAiCodeCompletion(language, currentCode, position);
-          if (result && result.length > 0) {
-              setSuggestions(result);
-              setActiveSuggestionIndex(0);
-
-              const textarea = textareaRef.current;
-              if (textarea) {
-                  const lines = currentCode.substring(0, position).split('\n');
-                  const lineIndex = lines.length - 1;
-                  const colIndex = lines[lineIndex].length;
-
-                  const top = padding.top + (lineIndex * lineHeight) + lineHeight;
-                  const left = padding.left + colIndex * charWidth;
-                  
-                  setSuggestionPosition({ top, left });
-                  setIsSuggestionsVisible(true);
-              }
+  const toggleFold = (startLine: number) => {
+      setFoldedLines(prev => {
+          const newSet = new Set(prev);
+          if (newSet.has(startLine)) {
+              newSet.delete(startLine);
           } else {
-              setIsSuggestionsVisible(false);
+              newSet.add(startLine);
           }
-      } catch (error) {
-          console.error("Failed to fetch suggestions:", error);
-          setIsSuggestionsVisible(false);
-      }
-  }, [language, charWidth, lineHeight, padding]);
-
-  const debouncedFetchSuggestions = useCallback(debounce(fetchSuggestions, 500), [fetchSuggestions]);
-
-  const handleCursorActivity = () => {
-    if (textareaRef.current) {
-        const position = textareaRef.current.selectionStart;
-        if (textareaRef.current.selectionStart !== textareaRef.current.selectionEnd) {
-             setIsSuggestionsVisible(false);
-             return;
-        }
-        debouncedFetchSuggestions(displayCode, position);
-    }
+          return newSet;
+      });
   };
-
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (isSuggestionsVisible) {
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            setActiveSuggestionIndex(prev => (prev + 1) % suggestions.length);
-            return;
-        }
-        if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            setActiveSuggestionIndex(prev => (prev - 1 + suggestions.length) % suggestions.length);
-            return;
-        }
-        if (e.key === 'Enter' || e.key === 'Tab') {
-            e.preventDefault();
-            handleAcceptSuggestion(suggestions[activeSuggestionIndex]);
-            return;
-        }
-        if (e.key === 'Escape') {
-            e.preventDefault();
-            setIsSuggestionsVisible(false);
-            return;
-        }
-    }
-    const BRACKET_PAIRS: Record<string, string> = { '(': ')', '[': ']', '{': '}', '"': '"', "'": "'", '`': '`' };
+    updateCursorPosition();
     const textarea = e.currentTarget;
-    const { selectionStart, selectionEnd, value } = textarea;
+
+    if (e.key === 'Tab' && !e.shiftKey) {
+        e.preventDefault();
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        // Insert 4 spaces for a tab
+        const newCode = displayCode.substring(0, start) + '    ' + displayCode.substring(end);
+        handleCodeChange(newCode);
+        
+        // Move cursor after inserted tab
+        setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = start + 4;
+        }, 0);
+    }
 
     if (e.key === 'Enter') {
         e.preventDefault();
-        const lineStartPos = value.lastIndexOf('\n', selectionStart - 1) + 1;
-        const currentLineText = value.substring(lineStartPos, selectionStart);
-        const indentMatch = currentLineText.match(/^\s*/);
-        const currentIndent = indentMatch ? indentMatch[0] : '';
-        let newIndent = currentIndent;
-        const trimmedLineBeforeCursor = currentLineText.trimEnd();
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
         
-        let shouldIndent = false;
-
-        if (language === 'python') {
-            if (/:$/.test(trimmedLineBeforeCursor)) shouldIndent = true;
-        } else {
-            if (/{$/.test(trimmedLineBeforeCursor)) {
-                shouldIndent = true;
-            } else {
-                const controlStructureRegex = /^\s*((if|for|while)\s*\(.*\)|do|else(\s+if\s*\(.*\))?)\s*$/;
-                if (controlStructureRegex.test(trimmedLineBeforeCursor) && !trimmedLineBeforeCursor.endsWith(';')) {
-                    shouldIndent = true;
-                }
-            }
-        }
+        // Find the indentation of the current line
+        const currentLineStart = displayCode.lastIndexOf('\n', start - 1) + 1;
+        const currentLine = displayCode.substring(currentLineStart, start);
+        const indentMatch = currentLine.match(/^\s*/);
+        const indent = indentMatch ? indentMatch[0] : '';
         
-        // Handle hanging indents from open parens/brackets
-        const openParenCount = (trimmedLineBeforeCursor.match(/\(/g) || []).length;
-        const closeParenCount = (trimmedLineBeforeCursor.match(/\)/g) || []).length;
-        if (openParenCount > closeParenCount) {
-             shouldIndent = true;
-        }
-        const openBracketCount = (trimmedLineBeforeCursor.match(/\[/g) || []).length;
-        const closeBracketCount = (trimmedLineBeforeCursor.match(/\]/g) || []).length;
-         if (openBracketCount > closeBracketCount) {
-             shouldIndent = true;
-        }
+        // Insert newline and carry over indentation
+        const newCode = displayCode.substring(0, start) + '\n' + indent + displayCode.substring(end);
+        handleCodeChange(newCode);
 
-
-        if (shouldIndent) newIndent += '    ';
-
-        const charBeforeCursor = value[selectionStart - 1];
-        const charAfterCursor = value[selectionStart];
-        let textToInsert = '\n' + newIndent;
-
-        if ((charBeforeCursor === '{' && charAfterCursor === '}') ||
-            (charBeforeCursor === '[' && charAfterCursor === ']') ||
-            (charBeforeCursor === '(' && charAfterCursor === ')')) {
-            textToInsert += '\n' + currentIndent;
-        }
-        
-        const newText = value.substring(0, selectionStart) + textToInsert + value.substring(selectionEnd);
-        handleCodeChange(newText);
-        
+        // Move cursor to the new line with indentation
         setTimeout(() => {
-            const cursorPosition = selectionStart + 1 + newIndent.length;
-            textarea.selectionStart = cursorPosition;
-            textarea.selectionEnd = cursorPosition;
+            textarea.selectionStart = textarea.selectionEnd = start + 1 + indent.length;
         }, 0);
-        return;
     }
+  };
+  
+  const updateCursorPosition = useCallback(() => {
+    if (!textareaRef.current || charWidth === 0 || lineHeight === 0) return;
 
-    if (Object.keys(BRACKET_PAIRS).includes(e.key)) {
-        e.preventDefault();
-        const opening = e.key;
-        const closing = BRACKET_PAIRS[opening];
-        const selectedText = value.substring(selectionStart, selectionEnd);
-        const newText = value.substring(0, selectionStart) + opening + selectedText + closing + value.substring(selectionEnd);
-        handleCodeChange(newText);
-        setTimeout(() => {
-            textarea.selectionStart = selectionStart + 1;
-            textarea.selectionEnd = selectionStart + 1 + selectedText.length;
-        }, 0);
-        return;
-    }
-
-    const closingChars = ['}', ')', ']', '"', "'", '`'];
-    if (closingChars.includes(e.key) && selectionStart === selectionEnd) {
-        if (value[selectionStart] === e.key) {
-            e.preventDefault();
-            textarea.selectionStart = selectionStart + 1;
-            textarea.selectionEnd = selectionStart + 1;
-            return;
-        }
-        
-        if (e.key === '}' || e.key === ')' || e.key === ']') {
-            const lineStartPos = value.lastIndexOf('\n', selectionStart - 1) + 1;
-            const currentLineText = value.substring(lineStartPos, selectionStart);
-            
-            if (currentLineText.trim() === '' && currentLineText.length >= 4) {
-                e.preventDefault();
-                const newIndent = currentLineText.substring(0, currentLineText.length - 4);
-                const newText = value.substring(0, lineStartPos) + newIndent + e.key + value.substring(selectionEnd);
-                handleCodeChange(newText);
-
-                setTimeout(() => {
-                    const cursorPosition = lineStartPos + newIndent.length + 1;
-                    textarea.selectionStart = cursorPosition;
-                    textarea.selectionEnd = cursorPosition;
-                }, 0);
-                return;
-            }
-        }
-    }
+    const textarea = textareaRef.current;
+    const textUpToCursor = displayCode.substring(0, textarea.selectionStart);
+    const lines = textUpToCursor.split('\n');
     
-    if (e.key === 'Backspace' && selectionStart === selectionEnd) {
-        const charBefore = value[selectionStart - 1];
-        const charAfter = value[selectionStart];
-        if (BRACKET_PAIRS[charBefore] === charAfter) {
-            e.preventDefault();
-            const newText = value.substring(0, selectionStart - 1) + value.substring(selectionStart + 1);
-            handleCodeChange(newText);
-            setTimeout(() => {
-                textarea.selectionStart = selectionStart - 1;
-                textarea.selectionEnd = selectionStart - 1;
-            }, 0);
-            return;
-        }
+    const currentLineNumber = lines.length - 1;
+    const currentColumnNumber = lines[lines.length - 1].length;
+
+    const top = currentLineNumber * lineHeight + padding.top - textarea.scrollTop;
+    const left = currentColumnNumber * charWidth + padding.left - textarea.scrollLeft;
+    
+    setCursorPosition({ top, left });
+  }, [charWidth, lineHeight, padding.top, padding.left, textareaRef, displayCode]);
+
+  useEffect(() => {
+    if (isFocused) {
+      updateCursorPosition();
     }
-  };
+  }, [code, isFocused, updateCursorPosition]);
 
-  const toggleFold = (startLine: number) => {
-    setFoldedLines(prev => {
-        const newSet = new Set(prev);
-        if (newSet.has(startLine)) {
-            newSet.delete(startLine);
-        } else {
-            newSet.add(startLine);
-        }
-        return newSet;
-    });
+  const handleFocus = () => {
+    setIsFocused(true);
+    updateCursorPosition();
   };
-      
-  const commonEditorClasses = "w-full h-full font-mono text-base resize-none focus:outline-none whitespace-pre-wrap tracking-normal";
-  const displayErrorLine = errorLine !== null ? originalToDisplayMap[errorLine - 1] + 1 : null;
-
+  
+  const handleBlur = () => {
+    setIsFocused(false);
+  };
+  
+  const errorDisplayLine = errorLine !== null ? originalToDisplayMap[errorLine - 1] : null;
+  
   return (
-    <div className={`h-full flex ${theme.background} ${theme.border} border rounded-md overflow-hidden`}>
-        <div
-            ref={lineNumbersRef}
-            data-name="line-number-gutter"
-            className={`text-right ${theme.lineNumber} select-none ${theme.lineNumberBg} ${theme.lineNumberBorder || ''} font-mono text-base overflow-hidden`}
-            style={{lineHeight: '1.5rem'}}
+    <div className={`relative h-full font-mono text-base ${theme.background} ${theme.text} rounded-b-md border ${theme.border} border-t-0 overflow-hidden flex`}>
+        <div 
+          ref={lineNumbersRef}
+          className={`flex-shrink-0 p-4 pt-[1rem] select-none ${theme.lineNumberBg} ${theme.lineNumberBorder || ''} overflow-hidden text-right`}
+          style={{ lineHeight: `${lineHeight}px` }}
+          aria-hidden="true"
         >
-            <div className="py-4 pl-2 pr-4 h-full">
-                {displayLineNumbers.map((num, index) => {
-                    const originalLineNumber = typeof num === 'number' ? num : parseInt(num.toString(), 10);
-                    const isFoldable = foldableRanges.has(originalLineNumber);
-                    const isFolded = foldedLines.has(originalLineNumber);
-
-                    return (
-                        <div 
-                            key={index} 
-                            className={`px-2 rounded-l-sm transition-colors duration-200 flex items-center justify-end h-6`}
-                        >
-                            {isFoldable ? (
-                                <button onClick={() => toggleFold(originalLineNumber)} className="mr-1 text-gray-500 hover:text-white">
-                                    {isFolded ? '▶' : '▼'}
-                                </button>
-                            ) : (
-                                <span className="w-4 mr-1"></span>
-                            )}
-                            <span className={num === displayErrorLine ? 'bg-red-500 bg-opacity-30 text-white' : ''}>
-                                {isFolded ? '...' : num}
-                            </span>
-                        </div>
-                    );
-                })}
-            </div>
+            {displayLineNumbers.map((lineNum, i) => {
+                const isFoldStart = foldableRanges.has(lineNum);
+                const isFolded = foldedLines.has(lineNum);
+                const isError = errorDisplayLine === i;
+                
+                return (
+                    <div key={i} className="relative h-[24px]">
+                        <span className={`${theme.lineNumber} ${isError ? 'text-red-400 font-bold' : ''}`}>
+                            {lineNum}
+                        </span>
+                        {isFoldStart && (
+                             <button
+                                onClick={() => toggleFold(lineNum)}
+                                className={`absolute left-[-20px] top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-xs ${theme.lineNumber} hover:bg-gray-700/50 rounded-sm`}
+                                title={isFolded ? 'Expand code' : 'Collapse code'}
+                             >
+                               {isFolded ? '▶' : '▼'}
+                             </button>
+                        )}
+                    </div>
+                );
+            })}
         </div>
-        <div className="relative flex-grow h-full">
-            <pre
-              ref={preRef}
-              aria-hidden="true"
-              className={`${commonEditorClasses} ${theme.text} absolute top-0 left-0 pointer-events-none overflow-hidden`}
-            >
-              <code className={`language-${language === 'cpp' ? 'cpp' : language}`}>
-                {displayCode + '\n'}
-              </code>
-            </pre>
-            
-            {displayErrorLine && errorColumn && lineHeight > 0 && charWidth > 0 && (
-                <div
-                    className="absolute"
-                    style={{
-                        top: `${padding.top + (displayErrorLine - 1) * lineHeight}px`,
-                        left: `${padding.left + (errorColumn > 0 ? errorColumn - 1 : 0) * charWidth}px`,
-                        width: `${charWidth}px`,
-                        height: `${lineHeight}px`,
-                        pointerEvents: 'auto',
-                        cursor: 'help',
-                    }}
-                    onMouseEnter={handleMouseEnterOnError}
-                    onMouseLeave={handleMouseLeaveOnError}
-                >
-                    <div
-                        className="absolute bottom-0 w-full"
-                        style={{
-                            height: '2px',
-                            backgroundColor: 'red',
-                        }}
-                    />
-                </div>
-            )}
-
+        
+        <div className="relative flex-grow h-full overflow-hidden">
             <textarea
               ref={textareaRef}
-              id="code-editor"
               value={displayCode}
               onChange={(e) => handleCodeChange(e.target.value)}
               onScroll={handleScroll}
               onKeyDown={handleKeyDown}
-              onKeyUp={handleCursorActivity}
-              onSelect={handleCursorActivity}
-              onClick={handleCursorActivity}
-              className={`${commonEditorClasses} p-4 bg-transparent text-transparent ${theme.caret} relative z-10 overflow-auto`}
-              style={{lineHeight: '1.5rem'}}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
+              onClick={updateCursorPosition}
+              onKeyUp={updateCursorPosition}
+              className={`absolute inset-0 z-0 resize-none overflow-auto bg-transparent p-4 font-mono text-base outline-none ${theme.text}`}
+              style={{
+                  textShadow: '0 0 0 rgba(0,0,0,0)',
+                  color: 'transparent',
+                  caretColor: 'transparent',
+              }}
               spellCheck="false"
-              autoCapitalize="off"
               autoComplete="off"
               autoCorrect="off"
-              aria-label="Code Editor"
+              autoCapitalize="off"
             />
-            {isTooltipVisible && aiExplanation && (
-                <div
-                    className="absolute z-20 p-4 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl max-w-lg"
-                    style={{ top: `${tooltipPosition.top}px`, left: `${tooltipPosition.left}px` }}
+
+            <pre
+              ref={preRef}
+              className="absolute inset-0 z-1 pointer-events-none"
+              aria-hidden="true"
+            >
+              <code className={`language-${language}`}>
+                {displayCode}
+              </code>
+            </pre>
+            
+            {isFocused && (
+                <div 
+                    className="absolute z-2 pointer-events-none blinking-cursor"
+                    style={{
+                        top: cursorPosition.top,
+                        left: cursorPosition.left,
+                        width: '2px',
+                        height: lineHeight,
+                        backgroundColor: theme.cursorColor,
+                    }}
+                />
+            )}
+            
+            {errorDisplayLine !== null && (
+                 <div
+                    className="absolute left-0 w-full bg-red-500/20 pointer-events-none"
+                    style={{ top: `${errorDisplayLine * lineHeight + padding.top}px`, height: `${lineHeight}px` }}
+                    onMouseEnter={handleMouseEnterOnError}
+                    onMouseLeave={handleMouseLeaveOnError}
                 >
-                    <h4 className={`font-bold text-lg mb-2 text-white`}>AI Assistant</h4>
-                    <div 
-                        className={`text-gray-300 text-base leading-relaxed max-w-none whitespace-pre-wrap`}
-                        dangerouslySetInnerHTML={{ __html: aiExplanation.replace(/\`\`\`(\w+)?\n([\s\S]+?)\n\`\`\`/g, '<pre class="bg-gray-800 p-2 my-2 rounded-md font-mono text-sm block whitespace-pre overflow-x-auto"><code>$2</code></pre>') }}
-                    />
+                    {errorColumn !== null && charWidth > 0 && (
+                        <div 
+                            className="absolute h-full border-b-2 border-red-500"
+                            style={{ 
+                                left: `${(errorColumn - 1) * charWidth + padding.left}px`,
+                                width: `${charWidth}px` 
+                            }}
+                        />
+                    )}
                 </div>
             )}
-             {isSuggestionsVisible && (
+            
+             {isTooltipVisible && aiExplanation && (
                 <div
-                    className="absolute z-30 bg-gray-800 border border-gray-700 rounded-md shadow-lg min-w-[200px]"
-                    style={{ top: `${suggestionPosition.top}px`, left: `${suggestionPosition.left}px` }}
+                    className="absolute z-30 p-2 bg-gray-800 border border-gray-600 rounded-md shadow-lg text-sm max-w-md"
+                    style={{ top: tooltipPosition.top, left: tooltipPosition.left }}
                 >
-                    <ul className="py-1">
-                        {suggestions.map((suggestion, index) => (
-                            <li
-                                key={index}
-                                className={`px-3 py-1 text-sm font-mono cursor-pointer ${
-                                    index === activeSuggestionIndex
-                                        ? 'bg-blue-600 text-white'
-                                        : 'text-gray-300 hover:bg-gray-700'
-                                }`}
-                                onClick={() => handleAcceptSuggestion(suggestion)}
-                                onMouseEnter={() => setActiveSuggestionIndex(index)}
-                            >
-                                {suggestion}
-                            </li>
-                        ))}
-                    </ul>
+                    {aiExplanation.split('\n').slice(0, 2).join('\n')}...
                 </div>
             )}
-          </div>
+        </div>
     </div>
   );
 };

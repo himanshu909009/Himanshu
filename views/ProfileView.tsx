@@ -1,6 +1,5 @@
 // Fix: Implemented the ProfileView component.
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Heatmap } from '../components/Heatmap';
 import { RecentActivity } from '../components/RecentActivity';
 import type { User } from '../types';
 
@@ -166,7 +165,6 @@ export function ProfileView({ user, onUserUpdate, onNavigate }: ProfileViewProps
           </div>
 
           <div className="lg:w-3/4 flex flex-col gap-8">
-            <Heatmap submissions={user.submissions} />
             <RecentActivity activities={user.submissions} onActivitySelect={handleActivitySelect} />
           </div>
         </div>

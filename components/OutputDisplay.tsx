@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import type { SimulationOutput, TestResult } from '../types';
 
@@ -169,9 +170,6 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({ output, isLoading,
                         <h3 className={`text-3xl font-bold mb-2 ${finalStatusColor}`}>{finalStatusText}</h3>
                         <p className="text-gray-300 text-lg">
                             Your submission has been processed.
-                        </p>
-                        <p className="text-gray-400 mt-2">
-                            Passed {passCount} of {totalCount} test cases.
                         </p>
                     </div>
                 );

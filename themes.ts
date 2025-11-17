@@ -9,6 +9,7 @@ export const THEMES: Record<ThemeName, Theme> = {
     lineNumberBg: 'bg-gray-900',
     border: 'border-gray-700',
     caret: 'caret-gray-200',
+    cursorColor: '#E5E7EB',
   },
   light: {
     name: 'light',
@@ -18,6 +19,7 @@ export const THEMES: Record<ThemeName, Theme> = {
     lineNumberBg: 'bg-gray-100',
     border: 'border-gray-300',
     caret: 'caret-gray-900',
+    cursorColor: '#111827',
     lineNumberBorder: 'border-r border-gray-300',
   },
   solarized: {
@@ -28,6 +30,7 @@ export const THEMES: Record<ThemeName, Theme> = {
     lineNumberBg: 'bg-[#073642]',
     border: 'border-[#073642]',
     caret: 'caret-[#839496]',
+    cursorColor: '#839496',
   },
   monokai: {
     name: 'monokai',
@@ -37,5 +40,6 @@ export const THEMES: Record<ThemeName, Theme> = {
     lineNumberBg: 'bg-[#3E3D32]',
     border: 'border-[#3E3D32]',
     caret: 'caret-[#F8F8F2]',
+    cursorColor: '#F8F8F2',
   },
 };

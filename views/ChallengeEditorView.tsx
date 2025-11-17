@@ -31,7 +31,11 @@ const getFileName = (language: Language) => {
 
 export function ChallengeEditorView({ challenge, user, onUserUpdate, onBack }: ChallengeEditorViewProps) {
     const [language, setLanguage] = useState<Language>('cpp');
-    const [code, setCode] = useState(challenge.boilerplateCode || '');
+    const getStorageKey = (lang: Language) => `challenge-editor-code-${challenge.id}-${lang}`;
+    
+    const [code, setCode] = useState(() => {
+        return localStorage.getItem(getStorageKey(language)) || challenge.boilerplateCode || '';
+    });
     const theme = THEMES['dark'];
 
     const [isProblemPanelVisible, setIsProblemPanelVisible] = useState(true);
@@ -59,7 +63,7 @@ export function ChallengeEditorView({ challenge, user, onUserUpdate, onBack }: C
     
     const handleLanguageChange = (newLanguage: Language) => {
         setLanguage(newLanguage);
-        setCode(DEFAULT_CODE[newLanguage]);
+        setCode(localStorage.getItem(getStorageKey(newLanguage)) || DEFAULT_CODE[newLanguage]);
         setOutput(null);
         setError(null);
         setInput("");
@@ -202,35 +206,42 @@ export function ChallengeEditorView({ challenge, user, onUserUpdate, onBack }: C
     
         // Update user submissions
         if (testResult) {
-            let submissionStatus: RecentActivityItem['status'];
-            switch(testResult.status) {
-                case 'pass':
-                    submissionStatus = 'Accepted';
-                    break;
-                case 'fail':
-                    submissionStatus = 'Wrong Answer';
-                    break;
-                case 'error':
-                    submissionStatus = 'Time Limit Exceeded'; // This is an assumption. It could be other runtime errors.
-                    break;
+            const isAlreadySolved = user.submissions.find(s => s.challengeId === challenge.id && s.status === 'Accepted');
+            const isCurrentSubmissionAccepted = testResult.status === 'pass';
+
+            // Only update submissions if the problem wasn't already solved, or if the new submission is also an acceptance.
+            // This prevents an 'Accepted' status from being overwritten by a 'Wrong Answer'.
+            if (!isAlreadySolved || isCurrentSubmissionAccepted) {
+                let submissionStatus: RecentActivityItem['status'];
+                switch(testResult.status) {
+                    case 'pass':
+                        submissionStatus = 'Accepted';
+                        break;
+                    case 'fail':
+                        submissionStatus = 'Wrong Answer';
+                        break;
+                    case 'error':
+                        submissionStatus = 'Time Limit Exceeded'; // This is an assumption. It could be other runtime errors.
+                        break;
+                }
+                
+                const newSubmission: RecentActivityItem = {
+                    id: Date.now(),
+                    challengeId: challenge.id,
+                    title: challenge.title,
+                    status: submissionStatus,
+                    timestamp: new Date().toISOString(),
+                };
+        
+                // Remove previous submission for this challenge and add the new one to the top
+                const otherSubmissions = user.submissions.filter(s => s.challengeId !== challenge.id);
+                
+                const updatedUser: User = {
+                    ...user,
+                    submissions: [newSubmission, ...otherSubmissions],
+                };
+                onUserUpdate(updatedUser);
             }
-            
-            const newSubmission: RecentActivityItem = {
-                id: Date.now(),
-                challengeId: challenge.id,
-                title: challenge.title,
-                status: submissionStatus,
-                timestamp: new Date().toISOString(),
-            };
-    
-            // Remove previous submission for this challenge and add the new one to the top
-            const otherSubmissions = user.submissions.filter(s => s.challengeId !== challenge.id);
-            
-            const updatedUser: User = {
-                ...user,
-                submissions: [newSubmission, ...otherSubmissions],
-            };
-            onUserUpdate(updatedUser);
         }
     
         setTestResults(results);
@@ -366,6 +377,7 @@ export function ChallengeEditorView({ challenge, user, onUserUpdate, onBack }: C
                             errorColumn={errorColumn}
                             aiExplanation={aiExplanation}
                             language={language}
+                            storageKey={getStorageKey(language)}
                         />
                     </div>
                 </div>

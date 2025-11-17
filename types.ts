@@ -63,6 +63,7 @@ export interface Theme {
   lineNumberBg: string;
   border: string;
   caret: string;
+  cursorColor: string;
   lineNumberBorder?: string;
 }
 
