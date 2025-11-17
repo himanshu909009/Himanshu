@@ -1,6 +1,6 @@
 import React from 'react';
 import { PracticeCard } from '../components/PracticeCard';
-import { PRACTICE_PROBLEMS, SUBJECT_PROBLEMS } from '../constants';
+import { PRACTICE_LANGUAGES } from '../constants';
 
 interface ProblemsViewProps {
     onCourseSelect: (courseName: string) => void;
@@ -8,31 +8,23 @@ interface ProblemsViewProps {
 
 export function ProblemsView({ onCourseSelect }: ProblemsViewProps) {
     return (
-        <div className="p-4 sm:p-6 lg:p-8">
-            <div className="max-w-screen-2xl mx-auto">
-                <div className="mb-12">
-                    <div className="flex justify-between items-center mb-6">
-                        <div>
-                            <h1 className="text-2xl font-bold text-white">Programming Languages</h1>
+        <div className="bg-gray-900 text-white h-full overflow-y-auto">
+            <div className="p-4 sm:p-6 lg:p-8">
+                <div className="max-w-screen-2xl mx-auto">
+                    <div className="mb-8">
+                        <div className="flex justify-between items-center mb-2">
+                            <div>
+                                <h1 className="text-3xl font-bold text-white">Programming Languages</h1>
+                            </div>
+                            <div className="flex items-center gap-4 text-sm font-medium">
+                                <a href="#" className="text-blue-400 hover:underline">Recent Contest Problems →</a>
+                                <a href="#" className="text-blue-400 hover:underline">Old practice problems →</a>
+                            </div>
                         </div>
                     </div>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {PRACTICE_PROBLEMS.map(problem => (
-                            <PracticeCard key={problem.name} problem={problem} onClick={() => onCourseSelect(problem.name)} />
-                        ))}
-                    </div>
-                </div>
-
-                <div>
-                    <div className="flex justify-between items-center mb-6">
-                        <div>
-                            <h1 className="text-2xl font-bold text-white">Subjects</h1>
-                        </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {SUBJECT_PROBLEMS.map(problem => (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                        {PRACTICE_LANGUAGES.map(problem => (
                             <PracticeCard key={problem.name} problem={problem} onClick={() => onCourseSelect(problem.name)} />
                         ))}
                     </div>

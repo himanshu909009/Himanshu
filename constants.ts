@@ -177,17 +177,15 @@ export const COURSES: Course[] = [
     { title: 'Data Structures Using C', category: 'Algorithms', lessons: 45, hours: 25, level: 'Intermediate', color: 'bg-green-500' },
 ];
 
-const C_PLUS_PLUS_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M12 12H16"/><path d="M14 10V14"/><path d="M18 12h4"/><path d="M20 10v4"/><path d="M8 16H4.5a2.5 2.5 0 1 1 0-5H8"/><path d="M5 12v0"/><path d="M20 18a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-2z"/></svg>`;
-const PYTHON_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M10.2 2.5c-.2.3-.4.6-.5.9-.3 1.2.3 2.5 1.5 2.8 1.2.3 2.5-.3 2.8-1.5.3-1.2-.3-2.5-1.5-2.8-.3-.1-.7-.1-1 0l-1.3 1.6V15c0 3.3 2.7 6 6 6h2"/><path d="M13.8 21.5c.2-.3.4-.6.5-.9.3-1.2-.3-2.5-1.5-2.8-1.2-.3-2.5.3-2.8 1.5-.3 1.2.3 2.5 1.5 2.8.3.1.7.1 1 0l1.3-1.6V9c0-3.3-2.7-6-6-6H7"/></svg>`;
-const ALGORITHMS_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m8 17 4 4 4-4"/></svg>`;
-
-export const PRACTICE_PROBLEMS: PracticeProblem[] = [
-  { name: 'C++', description: 'Master C++ from basics to advanced topics like OOP and memory management.', problems: 120, level: 'All Levels', icon: C_PLUS_PLUS_ICON, color: 'bg-blue-600' },
-  { name: 'Python', description: 'Solve problems with Python, focusing on its clean syntax and powerful libraries.', problems: 150, level: 'All Levels', icon: PYTHON_ICON, color: 'bg-yellow-500' },
-];
-
-export const SUBJECT_PROBLEMS: PracticeProblem[] = [
-  { name: 'Algorithms', description: 'Sharpen your problem-solving skills with a wide range of algorithmic challenges.', problems: 250, level: 'Intermediate', icon: ALGORITHMS_ICON, color: 'bg-green-600' },
+export const PRACTICE_LANGUAGES: PracticeProblem[] = [
+    { name: 'Practice C++', description: 'Solve C++ Practice problems online with the Practice C++ path on CodeChef. Answer MCQs exercise...', problems: 206, level: 'Beginner level', icon: `<svg width="32" height="32" viewBox="0 0 128 128"><path d="M51.4 128C23.1 128 0 104.9 0 76.6 0 48.3 23.1 25.2 51.4 25.2c10.2 0 19.8 3 27.9 8.2l-11.4 19.7c-3.8-2.2-8.3-3.6-13.3-3.6-8.9 0-16.7 5.1-20.2 12.6-1.5 3.2-2.3 6.7-2.3 10.4 0 3.7.8 7.2 2.3 10.4 3.5 7.5 11.3 12.6 20.2 12.6 5.1 0 9.7-1.4 13.6-3.8l11.2 19.5c-8.2 5.3-18.1 8.6-28.8 8.6zm50-51.4h-22v-22h-17.4v22h-22v17.4h22v22h17.4v-22h22V76.6z" fill="#004482"/></svg>`, color: 'bg-blue-500' },
+    { name: 'Practice Python', description: 'Solve Python coding problems online with Practice Python on CodeChef. Write code for over 19...', problems: 192, level: 'Beginner level', icon: `<svg width="32" height="32" viewBox="0 0 128 128"><path d="M64 128c35.4 0 64-28.6 64-64S99.4 0 64 0 0 28.6 0 64s28.6 64 64 64z" fill="#306998"/><path d="M87.6 92.8H64c-3.2 0-5.8-2.6-5.8-5.8V70.4c0-4.6 3.6-8.5 8.1-8.9l14.4-1.1c2.2-.2 4-2.1 4-4.4V40.4c0-2.4-1.9-4.4-4.3-4.4H42.7c-2.4 0-4.3 2-4.3 4.4v9.3c0 2.4 2 4.4 4.4 4.4h21.4c3.2 0 5.8 2.6 5.8 5.8v16.6c0 4.6-3.6 8.5-8.1 8.9l-14.4 1.1c-2.2-.2-4 2.1-4 4.4v15.6c0 2.4 1.9 4.4 4.3 4.4h45c2.4 0 4.3-2 4.3-4.4v-9.3c.1-2.4-1.9-4.4-4.3-4.4z" fill="#FFD43B"/><ellipse cx="53.4" cy="51.8" rx="5.8" ry="5.8" fill="#306998"/><ellipse cx="74.6" cy="76.2" rx="5.8" ry="5.8" fill="#306998"/></svg>`, color: 'bg-yellow-500' },
+    { name: 'Practice Java', description: 'Complete your Java coding practice with our online Java practice course on CodeChef. Solve over...', problems: 180, level: 'Beginner level', icon: `<svg width="32" height="32" viewBox="0 0 128 128"><circle cx="64" cy="64" r="64" fill="#5382a1"/><path d="M102.4 78.1c-2.6-1.2-4.3-2.6-4.3-5.3 0-2.3 1.2-4.2 3.8-5.7l9.1-5.3c3.4-2 5.1-4.7 5.1-8.1s-1.7-6.2-5.1-8.1l-9-5.3c-2.6-1.5-3.8-3.4-3.8-5.7 0-2.7 1.8-4.2 4.3-5.3 4.2-1.9 6.8-5.1 6.8-9.4 0-6.1-5-11-13.3-11-4.2 0-7.8 1.4-10.3 4-2.6 2.7-3.9 5.8-3.9 9.4 0 5.4 3.7 9.8 9.3 11.5 2.1.6 3.4 1.7 3.4 3.6 0 2.2-1.5 3.6-4.5 5.2l-8.6 4.6c-3.1 1.7-4.7 3.9-4.7 6.7 0 2.8 1.6 5 4.7 6.7l8.6 4.6c3.1 1.7 4.5 3.1 4.5 5.2s-1.3 3-3.4 3.6c-5.6 1.8-9.3 6.1-9.3 11.5 0 3.6 1.3 6.7 3.9 9.4 2.5 2.6 6.1 4 10.3 4 8.3 0 13.3-5 13.3-11 0-4.3-2.6-7.5-6.8-9.4z" fill="#fff"/><path d="M57.4 97.4c-4.3-2-7-5.4-7-10.4V41.3c0-4.9 2.7-8.4 7-10.4 4.3-2 9.5-2 15.6 0 4.3 2 6.9 5.4 6.9 10.4v45.7c0 4.9-2.6 8.4-6.9 10.4-6.2 2-11.3 2-15.6 0zm9-60.8c-1.7-.8-2.6-2.1-2.6-4.2 0-2.3 1-3.9 2.9-4.8 2-.9 4.6-.9 7.9 0 1.9.9 2.8 2.5 2.8 4.8 0 2.1-1 3.4-2.8 4.2-3.3.9-6.2.9-8.2 0z" fill="#f89820"/></svg>`, color: 'bg-orange-700' },
+    { name: 'Practice C', description: 'Improve your C programming skills with over 200 coding practice problems. Solve these beginner...', problems: 222, level: 'Beginner level', icon: `<svg width="32" height="32" viewBox="0 0 128 128"><path d="M64 0C28.7 0 0 28.7 0 64s28.7 64 64 64 64-28.7 64-64S99.3 0 64 0zm33.1 91.8c-4.3 4.3-10.1 6.5-17.4 6.5-6.4 0-12-2.1-16.7-6.2-4.8-4.2-7.8-9.6-9-16.2H89v-14H54.2c.8-6.1 3.6-11.2 8.4-15.3s10.9-6.2 18.2-6.2c6.9 0 12.6 2.1 17.1 6.3 4.5 4.2 6.7 9.8 6.7 16.8H128c0-9.3-2.9-17.5-8.6-24.5-5.7-7-13.6-12.2-23.5-15.5s-21-4.9-33.1-4.9c-12.8 0-24.4 2.1-34.6 6.2s-18.3 10-24.2 17.5-8.8 16.5-8.8 26.9 2.9 19.3 8.8 26.7 13.8 13.2 24.2 17.4 21.8 6.3 34.6 6.3c12.1 0 23-1.7 32.7-5.2s17.8-8.8 24.1-16.2c-5.7-5.9-12.2-8.8-19.5-8.8-7.1.1-13 2.4-17.7 6.9z" fill="#a8b9cc"/></svg>`, color: 'bg-indigo-700' },
+    { name: 'Practice Javascript', description: 'Practice JavaScript online with our set of coding problems selected for beginners. Solve these JavaScript...', problems: 169, level: 'Beginner level', icon: `<svg width="32" height="32" viewBox="0 0 128 128"><path d="M0 0h128v128H0z" fill="#f0db4f"/><path d="M48.4 59.5c.2-2.5 1.7-4.5 4.1-5.6 2.3-1.1 5.3-1.7 8.8-1.7 3.4 0 6.2.4 8.4 1.3 2.2.9 3.8 2.4 4.8 4.6.9 2.1 1.4 4.8 1.4 8s-.5 5.9-1.5 8.1c-1 2.2-2.6 3.8-4.8 4.7-2.2.9-5 1.3-8.3 1.3-4.4 0-7.8-.8-10.3-2.3-2.5-1.6-4.1-3.8-4.8-6.8H36c.9 4.3 3 7.8 6.4 10.5 3.4 2.7 7.7 4.1 13 4.1 4.2 0 8-.7 11.4-2.2 3.4-1.5 6.1-3.7 8-6.6s2.9-6.5 2.9-10.7c0-3-1-6.8-2.1-9.2-1.7-2.6-3.8-4.9-6.3-6.6-2.5-1.8-5.3-3.1-8.5-4-3.2-.8-6.7-1.2-10.5-1.2-5.1 0-9.5 1-13.3 3.1-3.8 2.1-6.5 5-8.1 8.8l10.9 6.5zm40.5 20c-1.3 2.6-3.2 4.6-5.8 5.9-2.6 1.3-5.6 2-9.1 2-3.6 0-6.8-.6-9.5-1.9-2.7-1.3-4.8-3.1-6.3-5.6-1.5-2.5-2.2-5.4-2.2-8.7s.7-6.2 2.2-8.7c1.5-2.5 3.6-4.4 6.3-5.6 2.7-1.2 5.9-1.8 9.5-1.8 3.5 0 6.5.6 9.1 1.9 2.6 1.3 4.5 3.1 5.8 5.7 1.3 2.6 1.9 5.5 1.9 8.7s-.6 6.1-1.9 8.6zm-11-14.7c-1.1-1.3-2.5-2-4.3-2s-3.2.7-4.3 2c-1.1 1.3-1.7 3-1.7 5.2s.6 3.9 1.7 5.1c1.1 1.2 2.5 1.8 4.3 1.8s3.2-.6 4.3-1.8c1.1-1.2 1.7-2.9 1.7-5.1s-.5-3.9-1.7-5.2z"/></svg>`, color: 'bg-yellow-400' },
+    { name: 'Projects using HTML / CSS', description: 'Practice HTML and CSS with our on site editor. Code 7 guided projects to build sites. Solve MCQ exercise...', problems: 183, level: 'Beginner level', icon: `<svg width="32" height="32" viewBox="0 0 128 128"><path d="M12.1 0h103.8L105 114.2 64 128 23.1 114.2 12.1 0z" fill="#e44d26"/><path d="M64 117.1V10.8h41L96 105.1 64 117.1z" fill="#f16529"/><path d="M30.4 21.6h33.6v10.8H35.7l2.1 24h26.2v-10.8H42.3l-2.1-13.2h21.7v34.6L64 86.8v11.5l-19-5.1.1-.9 2.2-25.1-19.4.1 2.2 24.5 33.5 9.1h.1v-10.9l-22.7-6.1-1.5-17.6h24.2V32.4H32.6l-2.2-10.8z" fill="#ebebeb"/><path d="M64 68.2h22.7l-2.1 23-18.5 5.1v-11.5l10.2-2.8.9-10.1H64v-10.8h33.6l-.1 1.3-3.2 35.2-30.3 8.1v10.9l39.5-10.7L102.7 21.6H64v10.8h28.4l-.9 11.2H64v34.6z" fill="#fff"/></svg>`, color: 'bg-orange-500' },
+    { name: 'SQL Practice Queries', description: 'Practice queries on Select, Where, Limit, Order by, Aggregates, Group by, Joins, Sub-queries and Case...', problems: 93, level: 'Intermediate level', icon: `<svg width="32" height="32" viewBox="0 0 128 128"><path d="M128 64c0 35.4-28.6 64-64 64S0 99.4 0 64 28.6 0 64 0s64 28.6 64 64z" fill="#00758f"/><path d="M64 112.8c-27 0-48.8-21.9-48.8-48.8S37 15.2 64 15.2c12.2 0 23.3 4.5 31.8 11.8l-15 14.8c-3.1-2.6-7.2-4.2-11.8-4.2-9.6 0-17.4 7.8-17.4 17.4s7.8 17.4 17.4 17.4c5.1 0 9.7-2.2 12.8-5.8h-12.8V59.4h29.5c.3 1.6.4 3.2.4 4.9 0 18.2-11.5 31.1-28.7 31.1zm33-47.5L84.8 77.5c2.3.1 4.7.2 7 .2 14.1 0 25.6-11.5 25.6-25.6 0-3.3-.6-6.4-1.8-9.3z" fill="#fff"/></svg>`, color: 'bg-blue-700' },
+    { name: 'Practice PHP', description: 'Enhance your PHP skills with our hands-on practice course. Master PHP syntax and real-world...', problems: 199, level: 'Beginner level', icon: `<svg width="32" height="32" viewBox="0 0 128 128"><ellipse cx="64" cy="64" rx="64" ry="44" fill="#6181b6"/><text x="26" y="86" font-family="sans-serif" font-size="64" fill="#fff">php</text></svg>`, color: 'bg-indigo-500' },
 ];
 
 export const CONTESTS: Contest[] = [
@@ -217,7 +215,7 @@ export const COURSE_DETAILS: Record<string, CourseDetails> = {
     'C++': {
         title: 'Comprehensive C++',
         description: 'An in-depth course on C++, covering everything from basic syntax to advanced features like templates, STL, and modern C++ standards. Perfect for beginners and those looking to strengthen their C++ skills for competitive programming and software development.',
-        icon: C_PLUS_PLUS_ICON,
+        icon: `<svg width="32" height="32" viewBox="0 0 128 128"><path d="M51.4 128C23.1 128 0 104.9 0 76.6 0 48.3 23.1 25.2 51.4 25.2c10.2 0 19.8 3 27.9 8.2l-11.4 19.7c-3.8-2.2-8.3-3.6-13.3-3.6-8.9 0-16.7 5.1-20.2 12.6-1.5 3.2-2.3 6.7-2.3 10.4 0 3.7.8 7.2 2.3 10.4 3.5 7.5 11.3 12.6 20.2 12.6 5.1 0 9.7-1.4 13.6-3.8l11.2 19.5c-8.2 5.3-18.1 8.6-28.8 8.6zm50-51.4h-22v-22h-17.4v22h-22v17.4h22v22h17.4v-22h22V76.6z" fill="#004482"/></svg>`,
         tags: {
             certification: true,
             rating: '4.8 (1,234 reviews)',
@@ -241,7 +239,7 @@ export const COURSE_DETAILS: Record<string, CourseDetails> = {
     'Python': {
         title: 'Python for Problem Solving',
         description: 'Learn Python from scratch and apply it to solve a variety of programming challenges. This course focuses on Python\'s standard library, data structures, and best practices for writing clean, efficient code.',
-        icon: PYTHON_ICON,
+        icon: `<svg width="32" height="32" viewBox="0 0 128 128"><path d="M64 128c35.4 0 64-28.6 64-64S99.4 0 64 0 0 28.6 0 64s28.6 64 64 64z" fill="#306998"/><path d="M87.6 92.8H64c-3.2 0-5.8-2.6-5.8-5.8V70.4c0-4.6 3.6-8.5 8.1-8.9l14.4-1.1c2.2-.2 4-2.1 4-4.4V40.4c0-2.4-1.9-4.4-4.3-4.4H42.7c-2.4 0-4.3 2-4.3 4.4v9.3c0 2.4 2 4.4 4.4 4.4h21.4c3.2 0 5.8 2.6 5.8 5.8v16.6c0 4.6-3.6 8.5-8.1 8.9l-14.4 1.1c-2.2-.2-4 2.1-4 4.4v15.6c0 2.4 1.9 4.4 4.3 4.4h45c2.4 0 4.3-2 4.3-4.4v-9.3c.1-2.4-1.9-4.4-4.3-4.4z" fill="#FFD43B"/><ellipse cx="53.4" cy="51.8" rx="5.8" ry="5.8" fill="#306998"/><ellipse cx="74.6" cy="76.2" rx="5.8" ry="5.8" fill="#306998"/></svg>`,
         tags: {
             certification: true,
             rating: '4.9 (2,500 reviews)',
@@ -261,7 +259,7 @@ export const COURSE_DETAILS: Record<string, CourseDetails> = {
     'Algorithms': {
         title: 'Data Structures & Algorithms',
         description: 'A comprehensive guide to common data structures and algorithms. This course is essential for passing technical interviews and improving your problem-solving abilities.',
-        icon: ALGORITHMS_ICON,
+        icon: `<svg width="32" height="32" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="128" height="128" rx="64" fill="#6181b6"/><path d="M40 96V32L88 64L40 96Z" fill="white"/></svg>`,
         tags: {
             certification: true,
             rating: '4.9 (5,100 reviews)',
@@ -836,4 +834,189 @@ export const CPP_CHALLENGES: Challenge[] = [
         sampleOutput: 'My name is John\nI am working with ID: 1234',
         testCases: [{ id: '1', input: 'John\n1234', expectedOutput: 'My name is John\nI am working with ID: 1234', isLocked: true }],
     },
+    {
+        id: 31,
+        title: 'Simple Calculator',
+        difficulty: 'Easy',
+        category: 'Control Flow',
+        maxScore: 10,
+        successRate: '90.0%',
+        description: 'Create a simple calculator that performs basic arithmetic operations.',
+        isSolved: false,
+        boilerplateCode: GENERIC_BOILERPLATE,
+        objective: 'Write a program that takes two floating-point numbers and an operator (+, -, *, /) as input and performs the corresponding calculation.',
+        inputFormat: 'A single line containing two floats and a character operator, separated by spaces.',
+        outputFormat: 'Print the result of the calculation, rounded to two decimal places.',
+        constraints: 'The divisor will not be zero for the `/` operation.',
+        sampleInput: '10.5 * 2.0',
+        sampleOutput: '21.00',
+        testCases: [{ id: '1', input: '10.5 * 2.0', expectedOutput: '21.00', isLocked: true }],
+    },
+    {
+        id: 32,
+        title: 'Swap Two Numbers',
+        difficulty: 'Easy',
+        category: 'Functions',
+        maxScore: 10,
+        successRate: '95.0%',
+        description: 'Swap the values of two integer variables.',
+        isSolved: false,
+        boilerplateCode: GENERIC_BOILERPLATE,
+        objective: 'Your task is to swap the values of two given integers. After swapping, the first number should hold the value of the second, and the second should hold the value of the first.',
+        inputFormat: 'A single line containing two space-separated integers, `a` and `b`.',
+        outputFormat: 'Print the two integers after swapping, separated by a space.',
+        constraints: '`-10^9 <= a, b <= 10^9`',
+        sampleInput: '15 30',
+        sampleOutput: '30 15',
+        testCases: [{ id: '1', input: '15 30', expectedOutput: '30 15', isLocked: true }],
+    },
+    {
+        id: 33,
+        title: 'Area and Perimeter of Rectangle',
+        difficulty: 'Easy',
+        category: 'C++ (Basic)',
+        maxScore: 10,
+        successRate: '92.0%',
+        description: 'Calculate the area and perimeter of a rectangle.',
+        isSolved: false,
+        boilerplateCode: GENERIC_BOILERPLATE,
+        objective: 'Given the length and width of a rectangle, calculate and print its area and perimeter.',
+        inputFormat: 'A single line containing two space-separated integers, `length` and `width`.',
+        outputFormat: 'Print two lines. The first line should contain the area (`length * width`). The second line should contain the perimeter (`2 * (length + width)`).',
+        constraints: '`1 <= length, width <= 1000`',
+        sampleInput: '10 5',
+        sampleOutput: '50\n30',
+        testCases: [{ id: '1', input: '10 5', expectedOutput: '50\n30', isLocked: true }],
+    },
+];
+
+export const SYLLABUS_MODULES = [
+    {
+        id: 1,
+        title: 'Output & Basic math operators',
+        description: 'Practice problems using C++ related to output and output on multiple lines.',
+        problems: [
+            { title: 'Sum of Two Numbers', difficulty: 'Easy', challengeId: 2 },
+            { title: 'Simple Calculator', difficulty: 'Easy', challengeId: 31 },
+            { title: 'Swap Two Numbers', difficulty: 'Easy', challengeId: 32 },
+            { title: 'Area and Perimeter of Rectangle', difficulty: 'Easy', challengeId: 33 },
+            { title: 'Celsius to Fahrenheit Conversion', difficulty: 'Easy', challengeId: 5 },
+        ]
+    },
+    {
+        id: 2,
+        title: 'Variables and Datatypes',
+        description: 'Practice problems related to variables and Datatypes using C++',
+        problems: [
+            { title: 'Variables of Different Data Types', difficulty: 'Easy', challengeId: 4 },
+        ]
+    },
+    {
+        id: 3,
+        title: 'Strings',
+        description: 'Practice problems related to strings and characters using C++',
+        problems: [
+             { title: 'Repeat a String', difficulty: 'Easy', challengeId: 3 },
+        ]
+    },
+    {
+        id: 4,
+        title: 'User inputs',
+        description: 'Accept user input and start solving slightly complex problems',
+        problems: [
+            { title: 'Sum and Difference of Two Numbers', difficulty: 'Easy', challengeId: 2 },
+        ]
+    },
+    {
+        id: 5,
+        title: 'Algorithmic problems - 1',
+        description: 'Practice simple problems on input, output and basic math',
+        problems: [
+            { title: 'Basic Arithmetic Operations', difficulty: 'Easy', challengeId: 7 },
+            { title: 'Circle Area and Circumference', difficulty: 'Easy', challengeId: 6 },
+        ]
+    },
+    {
+        id: 6,
+        title: 'Conditional statements',
+        description: 'Practice problems on conditional statements using If / Else, Combining conditions using And / Or, Switch',
+        problems: [
+            { title: 'Check Number Sign', difficulty: 'Easy', challengeId: 10 },
+            { title: 'Largest of Three Numbers', difficulty: 'Easy', challengeId: 11 },
+            { title: 'Grading System', difficulty: 'Easy', challengeId: 12 },
+        ]
+    },
+    {
+        id: 7,
+        title: 'Debug common errors',
+        description: 'Practice debugging common errors that you will encounter while writing code',
+        problems: []
+    },
+    {
+        id: 8,
+        title: 'Algorithmic problems - 2',
+        description: 'A notch higher - lets introduce conditional statements',
+        problems: [
+            { title: 'Bitwise Operators', difficulty: 'Easy', challengeId: 9 },
+        ]
+    },
+    {
+        id: 9,
+        title: 'Arrays',
+        description: 'Arrays are an integral part of any programming language. Practice problems on arrays using C++',
+        problems: [
+            { title: 'Initialize and Print an Array', difficulty: 'Easy', challengeId: 19 },
+            { title: 'Reverse an Array', difficulty: 'Easy', challengeId: 20 },
+            { title: 'Matrix Multiplication', difficulty: 'Medium', challengeId: 21 },
+        ]
+    },
+    {
+        id: 10,
+        title: 'Loops',
+        description: 'Practice problems related to While Loops, For Loops and Break / Continue',
+        problems: [
+            { title: 'Print Numbers with For Loop', difficulty: 'Easy', challengeId: 13 },
+            { title: 'Sum of Even Numbers', difficulty: 'Easy', challengeId: 14 },
+            { title: 'Multiplication Table', difficulty: 'Easy', challengeId: 15 },
+        ]
+    },
+    {
+        id: 11,
+        title: 'Algorithmic problems - 3',
+        description: 'Another notch higher - lets introduce Loops',
+        problems: [
+            { title: 'Factorial of a Number', difficulty: 'Medium', challengeId: 8 },
+        ]
+    },
+    {
+        id: 12,
+        title: 'Functions',
+        description: 'Practice problems that incorporate functions into your code using C++',
+        problems: [
+            { title: 'Function: Calculate Square', difficulty: 'Easy', challengeId: 16 },
+            { title: 'GCD with Recursion', difficulty: 'Medium', challengeId: 17 },
+        ]
+    },
+    {
+        id: 13,
+        title: 'Pointers',
+        description: 'Pointers in C++ are variables that store memory addresses, allowing direct manipulation of data in memory. They enable efficient memory management, dynamic allocation, and provide a powerful way to work with arrays and structures.',
+        problems: [
+            { title: 'Pointer Basics', difficulty: 'Easy', challengeId: 22 },
+            { title: 'Swap Values with Pointers', difficulty: 'Easy', challengeId: 23 },
+            { title: 'Dynamic Memory Allocation', difficulty: 'Medium', challengeId: 24 },
+            { title: 'Function Pointers for Arithmetic', difficulty: 'Medium', challengeId: 18 },
+        ]
+    },
+    {
+        id: 14,
+        title: 'Get started with complex algorithmic problems',
+        description: 'Practice problems on test cases and custom input / output required to solve algorithmic problems.',
+        problems: [
+             { title: 'Operator Overloading', difficulty: 'Medium', challengeId: 27 },
+             { title: 'Basic Inheritance', difficulty: 'Medium', challengeId: 28 },
+             { title: 'Polymorphism with Virtual Functions', difficulty: 'Medium', challengeId: 29 },
+             { title: 'Multiple Inheritance', difficulty: 'Medium', challengeId: 30 },
+        ]
+    }
 ];
