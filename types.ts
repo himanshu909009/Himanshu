@@ -117,6 +117,8 @@ export interface RecentActivityItem {
   title: string;
   status: 'Accepted' | 'Wrong Answer' | 'Time Limit Exceeded';
   timestamp: string;
+  code: string;
+  language: Language;
 }
 
 export interface CourseLesson {

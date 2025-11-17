@@ -163,11 +163,11 @@ export const INITIAL_USER: User = {
     { label: 'Points', value: 3200 },
   ],
   submissions: [
-    { id: 1, challengeId: 11, title: 'Largest of Three Numbers', status: 'Accepted', timestamp: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString() },
-    { id: 2, challengeId: 21, title: 'Matrix Multiplication', status: 'Wrong Answer', timestamp: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString() },
-    { id: 3, challengeId: 8, title: 'Factorial of a Number', status: 'Accepted', timestamp: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString() },
-    { id: 4, challengeId: 17, title: 'GCD with Recursion', status: 'Time Limit Exceeded', timestamp: new Date(new Date().setDate(new Date().getDate() - 5)).toISOString() },
-    { id: 5, challengeId: 1, title: 'Print "Hello, World!"', status: 'Accepted', timestamp: new Date(new Date().setDate(new Date().getDate() - 10)).toISOString() },
+    { id: 1, challengeId: 11, title: 'Largest of Three Numbers', status: 'Accepted', timestamp: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString(), language: 'cpp', code: '#include <iostream>\n#include <algorithm>\n\nint main() {\n    int a, b, c;\n    std::cin >> a >> b >> c;\n    int max_val = std::max({a, b, c});\n    std::cout << max_val;\n    return 0;\n}' },
+    { id: 2, challengeId: 21, title: 'Matrix Multiplication', status: 'Wrong Answer', timestamp: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString(), language: 'cpp', code: '#include <iostream>\n\nint main() {\n    // Incorrect logic\n    std::cout << "1 2 3\\n4 5 6\\n7 8 9";\n    return 0;\n}' },
+    { id: 3, challengeId: 8, title: 'Factorial of a Number', status: 'Accepted', timestamp: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString(), language: 'cpp', code: '#include <iostream>\n\nlong long factorial(int n) {\n    if (n < 0) return -1; // Or handle error appropriately\n    if (n == 0) return 1;\n    long long result = 1;\n    for (int i = 1; i <= n; ++i) {\n        result *= i;\n    }\n    return result;\n}\n\nint main() {\n    int n;\n    std::cin >> n;\n    std::cout << factorial(n) << std::endl;\n    return 0;\n}' },
+    { id: 4, challengeId: 17, title: 'GCD with Recursion', status: 'Time Limit Exceeded', timestamp: new Date(new Date().setDate(new Date().getDate() - 5)).toISOString(), language: 'cpp', code: '#include <iostream>\n\n// Intentionally inefficient to cause TLE\nlong long gcd(long long a, long long b) {\n    while(a != b){\n        if(a > b)\n            a -= b;\n        else\n            b -= a;\n    } \n    return a;\n}\n\nint main() {\n    long long a, b;\n    std::cin >> a >> b;\n    std::cout << gcd(a, b) << std::endl;\n    return 0;\n}' },
+    { id: 5, challengeId: 1, title: 'Print "Hello, World!"', status: 'Accepted', timestamp: new Date(new Date().setDate(new Date().getDate() - 10)).toISOString(), language: 'cpp', code: '#include <iostream>\n\nint main() {\n    std::cout << "Hello, World!" << std::endl;\n    return 0;\n}' },
   ]
 };
 

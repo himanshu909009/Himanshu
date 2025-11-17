@@ -3,17 +3,14 @@
 import React, { useState, useCallback } from 'react';
 import { CodeEditor } from '../components/CodeEditor';
 import { OutputDisplay } from '../components/OutputDisplay';
-import { InputSection } from '../components/InputSection';
 import { AiAgent } from '../components/AiAgent';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { ThemeSelector } from '../components/ThemeSelector';
 import { LANGUAGES, DEFAULT_CODE } from '../constants';
 import { runCodeSimulation, getAiErrorExplanation } from '../services/geminiService';
-import type { Language, SimulationOutput, ThemeName, VirtualFile, TestCase, TestResult } from '../types';
+import type { Language, SimulationOutput, ThemeName, VirtualFile } from '../types';
 import { THEMES } from '../themes';
 import { TemplateSelectorModal } from '../components/TemplateSelectorModal';
-import { Tabs } from '../components/Tabs';
-import { TestCasesManager } from '../components/TestCasesManager';
 
 const getFileName = (language: Language) => {
     switch (language) {
@@ -50,12 +47,6 @@ export function CompilerView() {
     const [aiExplanation, setAiExplanation] = useState<string | null>(null);
     const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState<boolean>(false);
-    const [activeTab, setActiveTab] = useState('input');
-    const [testCases, setTestCases] = useState<TestCase[]>([
-        { id: `custom-${Date.now()}`, input: '', expectedOutput: '', isLocked: false }
-    ]);
-    const [testResults, setTestResults] = useState<TestResult[] | null>(null);
-    const [isTesting, setIsTesting] = useState<boolean>(false);
 
     const handleCodeChange = useCallback((newCode: string) => {
         setCode(newCode);
@@ -75,14 +66,12 @@ export function CompilerView() {
         setErrorLine(null);
         setErrorColumn(null);
         setAiExplanation(null);
-        setTestResults(null);
     };
 
     const handleClearOutput = () => {
         setOutput(null);
         setError(null);
         setAiExplanation(null);
-        setTestResults(null);
     };
     
     const handleSelectTemplate = (templateCode: string) => {
@@ -100,7 +89,6 @@ export function CompilerView() {
         setIsLoading(true);
         setError(null);
         setOutput(null);
-        setTestResults(null);
         setErrorLine(null);
         setErrorColumn(null);
         setAiExplanation(null); 
@@ -141,67 +129,6 @@ export function CompilerView() {
         await handleRunCode(newFullInput);
     }, [fullInput, handleRunCode, isLoading]);
     
-    const handleRunTests = useCallback(async () => {
-        if (!code.trim()) {
-            setError("Code cannot be empty.");
-            return;
-        }
-        setIsTesting(true);
-        setOutput(null);
-        setTestResults(null);
-        setError(null);
-        setErrorLine(null);
-        setErrorColumn(null);
-        setAiExplanation(null);
-
-        const results: TestResult[] = [];
-        
-        // First, check for compilation errors
-        const compilationCheckFile: VirtualFile = { id: '1', name: getFileName(language), content: code };
-        const compilationResult = await runCodeSimulation(language, [compilationCheckFile], '1', '');
-        
-        if (compilationResult.compilation.status === 'error') {
-            setOutput(compilationResult);
-            setErrorLine(compilationResult.compilation.line ?? null);
-            setErrorColumn(compilationResult.compilation.column ?? null);
-            setIsTesting(false);
-            // Optionally get AI explanation for the compile error
-            setIsAiLoading(true);
-            try {
-                const explanation = await getAiErrorExplanation(language, code, compilationResult.compilation.message);
-                setAiExplanation(explanation);
-            } finally {
-                setIsAiLoading(false);
-            }
-            return;
-        }
-
-        for (const testCase of testCases) {
-             const file: VirtualFile = { id: '1', name: getFileName(language), content: code };
-             try {
-                const result = await runCodeSimulation(language, [file], file.id, testCase.input);
-                
-                let status: TestResult['status'] = 'fail';
-                let errorMessage: string | undefined;
-
-                if (result.output.stderr) {
-                    status = 'error';
-                    errorMessage = result.output.stderr;
-                } else if (result.output.stdout.trim() === testCase.expectedOutput.trim()) {
-                    status = 'pass';
-                }
-
-                results.push({ testCase, status, actualOutput: result.output.stdout, errorMessage });
-            } catch(e) {
-                 const errorMessage = e instanceof Error ? e.message : "An unknown error occurred during test case execution.";
-                 results.push({ testCase, status: 'error', actualOutput: '', errorMessage });
-            }
-        }
-
-        setTestResults(results);
-        setIsTesting(false);
-
-    }, [language, code, testCases]);
 
     const currentThemeObject = THEMES[theme];
 
@@ -230,18 +157,11 @@ export function CompilerView() {
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V4zm2 0v12h6V4H7zm2 2h2a1 1 0 110 2H9a1 1 0 110-2zm0 4h2a1 1 0 110 2H9a1 1 0 110-2z" /></svg>
                                 </ControlButton>
                                 <button
-                                    onClick={() => handleRunCode(fullInput)}
-                                    disabled={isLoading || isTesting}
-                                    className="bg-gray-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-gray-500 transition disabled:bg-gray-500/50 disabled:cursor-not-allowed text-base"
+                                    onClick={() => { setFullInput(""); handleRunCode(""); }}
+                                    disabled={isLoading}
+                                    className="bg-green-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-green-700 transition disabled:bg-green-500/50 disabled:cursor-not-allowed text-base"
                                 >
                                     {isLoading ? 'Running...' : 'Run'}
-                                </button>
-                                <button
-                                    onClick={handleRunTests}
-                                    disabled={isLoading || isTesting}
-                                    className="bg-blue-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-blue-700 transition disabled:bg-blue-500/50 disabled:cursor-not-allowed text-base"
-                                >
-                                    {isTesting ? 'Testing...' : 'Run Tests'}
                                 </button>
                             </div>
                         </div>
@@ -257,28 +177,16 @@ export function CompilerView() {
                         />
                     </div>
 
-                    <div className="md:w-2/5 lg:w-1/3 h-full flex flex-col gap-4">
-                        <div className="flex-[2] flex flex-col min-h-0">
-                             <Tabs activeTab={activeTab} onTabChange={setActiveTab}>
-                                <div data-id="input" data-title="Input" className="h-full">
-                                    <InputSection value={fullInput} onChange={setFullInput} isLoading={isLoading || isTesting} />
-                                </div>
-                                <div data-id="testcases" data-title="Test Cases" className="h-full">
-                                    <TestCasesManager testCases={testCases} onTestCasesChange={setTestCases} theme={currentThemeObject} />
-                                </div>
-                            </Tabs>
-                        </div>
-                        <div className="flex-[3] flex flex-col min-h-0">
-                            <OutputDisplay 
-                                output={output} 
-                                isLoading={isLoading} 
-                                error={error}
-                                onInputSubmit={handleTerminalSubmit}
-                                onClear={handleClearOutput}
-                                testResults={testResults}
-                                isTesting={isTesting}
-                            />
-                        </div>
+                    <div className="md:w-2/5 lg:w-1/3 h-full flex flex-col">
+                        <OutputDisplay 
+                            output={output} 
+                            isLoading={isLoading} 
+                            error={error}
+                            onInputSubmit={handleTerminalSubmit}
+                            onClear={handleClearOutput}
+                            testResults={null}
+                            isTesting={false}
+                        />
                     </div>
 
 

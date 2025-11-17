@@ -10,9 +10,10 @@ const StarIcon: React.FC = () => (
 interface ChallengeListItemProps {
   challenge: Challenge;
   onPerform: (challengeId: number) => void;
+  isSolved: boolean;
 }
 
-export const ChallengeListItem: React.FC<ChallengeListItemProps> = ({ challenge, onPerform }) => {
+export const ChallengeListItem: React.FC<ChallengeListItemProps> = ({ challenge, onPerform, isSolved }) => {
   const { id, title, difficulty, category, maxScore, successRate, description } = challenge;
   return (
     <div className="bg-gray-800 p-6 rounded-lg flex justify-between items-center hover:bg-gray-700 transition">
@@ -35,9 +36,13 @@ export const ChallengeListItem: React.FC<ChallengeListItemProps> = ({ challenge,
         </button>
         <button 
           onClick={() => onPerform(id)}
-          className="px-6 py-2 rounded-md font-semibold text-base transition bg-green-500 text-white hover:bg-green-600"
+          className={`px-6 py-2 rounded-md font-semibold text-base transition ${
+            isSolved
+              ? 'bg-gray-700 text-green-400'
+              : 'bg-green-500 text-white hover:bg-green-600'
+          }`}
         >
-          Perform
+          {isSolved ? 'Performed' : 'Perform'}
         </button>
       </div>
     </div>

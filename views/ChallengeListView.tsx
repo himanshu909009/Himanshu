@@ -1,15 +1,22 @@
 import React from 'react';
 import { ChallengeListItem } from '../components/ChallengeListItem';
-import type { Challenge } from '../types';
+import type { Challenge, User } from '../types';
 
 interface ChallengeListViewProps {
     courseTitle: string;
     challenges: Challenge[];
     onBack: () => void;
     onChallengeSelect: (challengeId: number) => void;
+    user: User;
 }
 
-export function ChallengeListView({ courseTitle, challenges, onBack, onChallengeSelect }: ChallengeListViewProps) {
+export function ChallengeListView({ courseTitle, challenges, onBack, onChallengeSelect, user }: ChallengeListViewProps) {
+    const solvedChallengeIds = new Set(
+        user.submissions
+            .filter(s => s.status === 'Accepted')
+            .map(s => s.challengeId)
+    );
+    
     return (
         <div className="p-4 sm:p-6 lg:p-8">
             <div className="max-w-screen-xl mx-auto">
@@ -22,7 +29,12 @@ export function ChallengeListView({ courseTitle, challenges, onBack, onChallenge
                 <h1 className="text-4xl font-bold text-white mb-6">List of Experiments</h1>
                 <div className="space-y-4">
                     {challenges.map(challenge => (
-                        <ChallengeListItem key={challenge.id} challenge={challenge} onPerform={onChallengeSelect} />
+                        <ChallengeListItem 
+                            key={challenge.id} 
+                            challenge={challenge} 
+                            onPerform={onChallengeSelect} 
+                            isSolved={solvedChallengeIds.has(challenge.id)}
+                        />
                     ))}
                 </div>
             </div>

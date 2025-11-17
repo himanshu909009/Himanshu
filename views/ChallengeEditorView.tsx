@@ -1,5 +1,6 @@
 
-import React, { useState, useCallback } from 'react';
+
+import React, { useState, useCallback, useMemo } from 'react';
 import { ProblemDescription } from '../components/ProblemDescription';
 import { CodeEditor } from '../components/CodeEditor';
 import { OutputDisplay } from '../components/OutputDisplay';
@@ -30,16 +31,28 @@ const getFileName = (language: Language) => {
 };
 
 export function ChallengeEditorView({ challenge, user, onUserUpdate, onBack }: ChallengeEditorViewProps) {
-    const [language, setLanguage] = useState<Language>('cpp');
-    const getStorageKey = (lang: Language) => `challenge-editor-code-${challenge.id}-${lang}`;
+    const successfulSubmission = useMemo(() => 
+        user.submissions.find(s => s.challengeId === challenge.id && s.status === 'Accepted'),
+        [user.submissions, challenge.id]
+    );
+
+    const [language, setLanguage] = useState<Language>(successfulSubmission?.language || 'cpp');
+
+    const getStorageKey = useCallback((lang: Language) => 
+        `challenge-editor-code-${challenge.id}-${lang}`,
+        [challenge.id]
+    );
     
     const [code, setCode] = useState(() => {
-        return localStorage.getItem(getStorageKey(language)) || challenge.boilerplateCode || '';
+        if (successfulSubmission) {
+            return successfulSubmission.code;
+        }
+        const initialLang = 'cpp';
+        return localStorage.getItem(getStorageKey(initialLang)) || challenge.boilerplateCode || DEFAULT_CODE[initialLang];
     });
+    
     const theme = THEMES['dark'];
-
     const [isProblemPanelVisible, setIsProblemPanelVisible] = useState(true);
-
     const [output, setOutput] = useState<SimulationOutput | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isTesting, setIsTesting] = useState<boolean>(false);
@@ -63,7 +76,11 @@ export function ChallengeEditorView({ challenge, user, onUserUpdate, onBack }: C
     
     const handleLanguageChange = (newLanguage: Language) => {
         setLanguage(newLanguage);
-        setCode(localStorage.getItem(getStorageKey(newLanguage)) || DEFAULT_CODE[newLanguage]);
+        if (successfulSubmission && newLanguage === successfulSubmission.language) {
+            setCode(successfulSubmission.code);
+        } else {
+            setCode(localStorage.getItem(getStorageKey(newLanguage)) || DEFAULT_CODE[newLanguage]);
+        }
         setOutput(null);
         setError(null);
         setInput("");
@@ -209,8 +226,6 @@ export function ChallengeEditorView({ challenge, user, onUserUpdate, onBack }: C
             const isAlreadySolved = user.submissions.find(s => s.challengeId === challenge.id && s.status === 'Accepted');
             const isCurrentSubmissionAccepted = testResult.status === 'pass';
 
-            // Only update submissions if the problem wasn't already solved, or if the new submission is also an acceptance.
-            // This prevents an 'Accepted' status from being overwritten by a 'Wrong Answer'.
             if (!isAlreadySolved || isCurrentSubmissionAccepted) {
                 let submissionStatus: RecentActivityItem['status'];
                 switch(testResult.status) {
@@ -221,7 +236,7 @@ export function ChallengeEditorView({ challenge, user, onUserUpdate, onBack }: C
                         submissionStatus = 'Wrong Answer';
                         break;
                     case 'error':
-                        submissionStatus = 'Time Limit Exceeded'; // This is an assumption. It could be other runtime errors.
+                        submissionStatus = 'Time Limit Exceeded'; // This is an assumption.
                         break;
                 }
                 
@@ -231,9 +246,10 @@ export function ChallengeEditorView({ challenge, user, onUserUpdate, onBack }: C
                     title: challenge.title,
                     status: submissionStatus,
                     timestamp: new Date().toISOString(),
+                    code: code,
+                    language: language,
                 };
         
-                // Remove previous submission for this challenge and add the new one to the top
                 const otherSubmissions = user.submissions.filter(s => s.challengeId !== challenge.id);
                 
                 const updatedUser: User = {
@@ -271,7 +287,7 @@ export function ChallengeEditorView({ challenge, user, onUserUpdate, onBack }: C
     
         setIsTesting(false);
 
-    }, [language, code, challenge.id, challenge.title, challenge.sampleInput, challenge.sampleOutput, user, onUserUpdate]);
+    }, [language, code, challenge, user, onUserUpdate]);
     
     const handleTerminalSubmit = useCallback(async (newLine: string) => {
         if (isLoading) return;

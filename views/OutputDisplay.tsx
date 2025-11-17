@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import type { SimulationOutput, TestResult } from '../types';
 
@@ -49,7 +50,7 @@ const OutputContent: React.FC<{ output: SimulationOutput }> = ({ output }) => {
     const className = programOutput.stderr ? 'text-yellow-400' : '';
     
     if (!content && compilation.status === 'success') {
-      content = "Execution successful, but no output (stdout) was produced.";
+      content = "Execution successful";
     }
 
     return <pre className={`${className} whitespace-pre-wrap break-words`}>{content}</pre>;

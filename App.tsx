@@ -1,4 +1,5 @@
 
+
 // Fix: Implemented the main App component with view routing logic.
 import React, { useState } from 'react';
 import { Header } from './components/Header';
@@ -93,6 +94,7 @@ function App() {
 
         if (selectedCourse && supportedSelections.includes(selectedCourse)) {
           return <ChallengeListView 
+            user={user}
             courseTitle={selectedCourse} 
             challenges={CPP_CHALLENGES} 
             onBack={() => handleNavigate(backView)}
