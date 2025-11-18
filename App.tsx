@@ -76,9 +76,16 @@ function App() {
   const renderView = () => {
     switch (currentView) {
       case 'courses':
-        return <CoursesView user={user} onCourseSelect={(courseTitle) => handleNavigate('challengeList', courseTitle)} />;
+        return <CoursesView 
+          user={user} 
+          onCourseSelect={(courseTitle) => handleNavigate('challengeList', courseTitle)} 
+          onActivitySelect={(challengeId) => handleNavigate('challengeEditor', challengeId)} 
+        />;
       case 'practice':
-        return <ProblemsView onCourseSelect={(courseTitle) => {
+        return <ProblemsView 
+          user={user}
+          onActivitySelect={(challengeId) => handleNavigate('challengeEditor', challengeId)}
+          onCourseSelect={(courseTitle) => {
             const courseKeyMap: Record<string, string> = {
                 'Practice C++': 'C++',
                 'Practice Python': 'Python',
